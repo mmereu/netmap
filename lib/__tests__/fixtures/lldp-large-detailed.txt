@@ -1,0 +1,1012 @@
+LLDP neighbor-information of port 10GE1/0/1:
+10GE1/0/1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :a0b3-ccf1-2341
+Port ID type                       :Interface name
+Port ID                            :XGigabitEthernet1/0/1
+Port description                   :10GE uplink to CORE-SW-001
+System name                        :CORE-SW-001
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE6881EI V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.1.1
+Expired time                       :120s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port 10GE1/0/2:
+10GE1/0/2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :b1c4-dde2-3452
+Port ID type                       :Interface name
+Port ID                            :XGigabitEthernet1/0/2
+Port description                   :10GE uplink to CORE-SW-002
+System name                        :CORE-SW-002
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE6881EI V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.1.2
+Expired time                       :115s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port GE1/0/1:
+GE1/0/1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :c2d5-eef3-4563
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/1
+Port description                   :Access port - Server Rack A1
+System name                        :SERVER-SW-A1
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S5735-L V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge
+System capabilities enabled        :bridge
+Management address type            :IPv4
+Management address                 :10.10.10.1
+Expired time                       :95s
+Port VLAN ID(PVID)                 :100
+LLDP neighbor-information of port GE1/0/2:
+GE1/0/2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :d3e6-ff04-5674
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/2
+Port description                   :Access port - Server Rack A2
+System name                        :SERVER-SW-A2
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S5735-L V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge
+System capabilities enabled        :bridge
+Management address type            :IPv4
+Management address                 :10.10.10.2
+Expired time                       :102s
+Port VLAN ID(PVID)                 :100
+LLDP neighbor-information of port GE1/0/3:
+GE1/0/3 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :e4f7-0015-6785
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR1-001
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.20.1
+Expired time                       :88s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/4:
+GE1/0/4 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :f508-1126-7896
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR1-002
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.20.2
+Expired time                       :91s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/5:
+GE1/0/5 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :0619-2237-89a7
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR1-003
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.20.3
+Expired time                       :105s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/6:
+GE1/0/6 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :172a-3348-9ab8
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR1-004
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.20.4
+Expired time                       :97s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/7:
+GE1/0/7 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :283b-4459-abc9
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/1
+Port description                   :Uplink to Distribution
+System name                        :DISTRIB-SW-01
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S6730-H V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.5.1
+Expired time                       :118s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port GE1/0/8:
+GE1/0/8 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :394c-556a-bcda
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/2
+Port description                   :Uplink to Distribution
+System name                        :DISTRIB-SW-02
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S6730-H V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.5.2
+Expired time                       :112s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port GE1/0/9:
+GE1/0/9 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :4a5d-667b-cdeb
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Server NIC - Database Server
+System name                        :DB-SERVER-01
+System description                 :Linux db-server-01 5.4.0-150-generic
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.30.1
+Expired time                       :108s
+Port VLAN ID(PVID)                 :300
+LLDP neighbor-information of port GE1/0/10:
+GE1/0/10 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :5b6e-778c-defc
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Server NIC - Application Server
+System name                        :APP-SERVER-01
+System description                 :Linux app-server-01 5.4.0-150-generic
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.30.2
+Expired time                       :99s
+Port VLAN ID(PVID)                 :300
+LLDP neighbor-information of port GE1/0/11:
+GE1/0/11 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :6c7f-889d-ef0d
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Server NIC - Web Server
+System name                        :WEB-SERVER-01
+System description                 :Linux web-server-01 5.4.0-150-generic
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.30.3
+Expired time                       :104s
+Port VLAN ID(PVID)                 :300
+LLDP neighbor-information of port GE1/0/12:
+GE1/0/12 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :7d80-99ae-f01e
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Server NIC - Backup Server
+System name                        :BACKUP-SERVER-01
+System description                 :Linux backup-server-01 5.4.0-150-generic
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.30.4
+Expired time                       :96s
+Port VLAN ID(PVID)                 :300
+LLDP neighbor-information of port GE1/0/13:
+GE1/0/13 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :8e91-aabf-012f
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR1-001
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.40.1
+Expired time                       :85s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/14:
+GE1/0/14 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :9fa2-bbc0-1230
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR1-002
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.40.2
+Expired time                       :89s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/15:
+GE1/0/15 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :a0b3-ccd1-2341
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR1-003
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.40.3
+Expired time                       :92s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/16:
+GE1/0/16 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :b1c4-dde2-3452
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR1-004
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.40.4
+Expired time                       :87s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/17:
+GE1/0/17 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :c2d5-eef3-4563
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR2-001
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.21.1
+Expired time                       :94s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/18:
+GE1/0/18 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :d3e6-ff04-5674
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR2-002
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.21.2
+Expired time                       :101s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/19:
+GE1/0/19 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :e4f7-0015-6785
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR2-003
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.21.3
+Expired time                       :98s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/20:
+GE1/0/20 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :f508-1126-7896
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR2-004
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.21.4
+Expired time                       :103s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/21:
+GE1/0/21 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :0619-2237-89a7
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/1
+Port description                   :Camera Network Port
+System name                        :CAM-LOBBY-001
+System description                 :Hikvision Network Camera
+                                    DS-2CD2143G0-IS V5.6.5
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.50.1
+Expired time                       :78s
+Port VLAN ID(PVID)                 :500
+LLDP neighbor-information of port GE1/0/22:
+GE1/0/22 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :172a-3348-9ab8
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/1
+Port description                   :Camera Network Port
+System name                        :CAM-LOBBY-002
+System description                 :Hikvision Network Camera
+                                    DS-2CD2143G0-IS V5.6.5
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.50.2
+Expired time                       :82s
+Port VLAN ID(PVID)                 :500
+LLDP neighbor-information of port GE1/0/23:
+GE1/0/23 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :283b-4459-abc9
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/1
+Port description                   :Camera Network Port
+System name                        :CAM-PARKING-001
+System description                 :Hikvision Network Camera
+                                    DS-2CD2143G0-IS V5.6.5
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.50.3
+Expired time                       :76s
+Port VLAN ID(PVID)                 :500
+LLDP neighbor-information of port GE1/0/24:
+GE1/0/24 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :394c-556a-bcda
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/1
+Port description                   :Camera Network Port
+System name                        :CAM-PARKING-002
+System description                 :Hikvision Network Camera
+                                    DS-2CD2143G0-IS V5.6.5
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.50.4
+Expired time                       :80s
+Port VLAN ID(PVID)                 :500
+LLDP neighbor-information of port GE1/0/25:
+GE1/0/25 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :4a5d-667b-cdeb
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Storage NIC - NAS Primary
+System name                        :NAS-PRIMARY-01
+System description                 :Synology DiskStation DS1621+
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.60.1
+Expired time                       :110s
+Port VLAN ID(PVID)                 :600
+LLDP neighbor-information of port GE1/0/26:
+GE1/0/26 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :5b6e-778c-defc
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Storage NIC - NAS Secondary
+System name                        :NAS-SECONDARY-01
+System description                 :Synology DiskStation DS1621+
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.60.2
+Expired time                       :107s
+Port VLAN ID(PVID)                 :600
+LLDP neighbor-information of port GE1/0/27:
+GE1/0/27 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :6c7f-889d-ef0d
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/3
+Port description                   :Uplink to Access Switch
+System name                        :ACCESS-SW-FLOOR3-01
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S5735-L V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge
+System capabilities enabled        :bridge
+Management address type            :IPv4
+Management address                 :10.10.11.1
+Expired time                       :116s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port GE1/0/28:
+GE1/0/28 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :7d80-99ae-f01e
+Port ID type                       :Interface name
+Port ID                            :GigabitEthernet0/0/3
+Port description                   :Uplink to Access Switch
+System name                        :ACCESS-SW-FLOOR3-02
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S5735-L V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge
+System capabilities enabled        :bridge
+Management address type            :IPv4
+Management address                 :10.10.11.2
+Expired time                       :113s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port GE1/0/29:
+GE1/0/29 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :8e91-aabf-012f
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR2-001
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.41.1
+Expired time                       :83s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/30:
+GE1/0/30 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :9fa2-bbc0-1230
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR2-002
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.41.2
+Expired time                       :86s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/31:
+GE1/0/31 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :a0b3-ccd1-3452
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR2-003
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.41.3
+Expired time                       :90s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/32:
+GE1/0/32 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :b1c4-dde2-4563
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface IP Phone
+System name                        :PHONE-FLOOR2-004
+System description                 :Huawei IP Phone eSpace 7910
+System capabilities supported      :telephone
+System capabilities enabled        :telephone
+Management address type            :IPv4
+Management address                 :10.10.41.4
+Expired time                       :84s
+Port VLAN ID(PVID)                 :400
+LLDP neighbor-information of port GE1/0/33:
+GE1/0/33 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :c2d5-eef3-5674
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Printer Network Port
+System name                        :PRINTER-FLOOR1-001
+System description                 :HP LaserJet Pro M404n
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.70.1
+Expired time                       :72s
+Port VLAN ID(PVID)                 :700
+LLDP neighbor-information of port GE1/0/34:
+GE1/0/34 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :d3e6-ff04-6785
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Printer Network Port
+System name                        :PRINTER-FLOOR1-002
+System description                 :HP LaserJet Pro M404n
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.70.2
+Expired time                       :75s
+Port VLAN ID(PVID)                 :700
+LLDP neighbor-information of port GE1/0/35:
+GE1/0/35 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :e4f7-0015-7896
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Printer Network Port
+System name                        :PRINTER-FLOOR2-001
+System description                 :HP LaserJet Pro M404n
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.70.3
+Expired time                       :70s
+Port VLAN ID(PVID)                 :700
+LLDP neighbor-information of port GE1/0/36:
+GE1/0/36 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :f508-1126-89a7
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Printer Network Port
+System name                        :PRINTER-FLOOR2-002
+System description                 :HP LaserJet Pro M404n
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.70.4
+Expired time                       :73s
+Port VLAN ID(PVID)                 :700
+LLDP neighbor-information of port GE1/0/37:
+GE1/0/37 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :0619-2237-9ab8
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR3-001
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.22.1
+Expired time                       :100s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/38:
+GE1/0/38 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :172a-3348-abc9
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR3-002
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.22.2
+Expired time                       :97s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/39:
+GE1/0/39 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :283b-4459-bcda
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR3-003
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.22.3
+Expired time                       :102s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/40:
+GE1/0/40 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :394c-556a-cdeb
+Port ID type                       :Interface name
+Port ID                            :mgt0
+Port description                   :Management Interface AP
+System name                        :AP-FLOOR3-004
+System description                 :Huawei Access Point
+                                    AP6050DN V200R019C00SPC800
+System capabilities supported      :bridge wlan-access-point
+System capabilities enabled        :bridge wlan-access-point
+Management address type            :IPv4
+Management address                 :10.10.22.4
+Expired time                       :99s
+Port VLAN ID(PVID)                 :200
+LLDP neighbor-information of port GE1/0/41:
+GE1/0/41 has 2 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :4a5d-667b-defc
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Workstation NIC - Engineering
+System name                        :WS-ENG-001
+System description                 :Windows 10 Enterprise LTSC
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.80.1
+Expired time                       :65s
+Port VLAN ID(PVID)                 :800
+
+Neighbor index                     :2
+Chassis type                       :MAC address
+Chassis ID                         :5b6e-778c-ef0d
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Workstation NIC - Engineering
+System name                        :WS-ENG-002
+System description                 :Windows 10 Enterprise LTSC
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.80.2
+Expired time                       :68s
+Port VLAN ID(PVID)                 :800
+LLDP neighbor-information of port GE1/0/42:
+GE1/0/42 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :6c7f-889d-f01e
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Workstation NIC - Engineering
+System name                        :WS-ENG-003
+System description                 :Windows 10 Enterprise LTSC
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.80.3
+Expired time                       :71s
+Port VLAN ID(PVID)                 :800
+LLDP neighbor-information of port GE1/0/43:
+GE1/0/43 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :7d80-99ae-012f
+Port ID type                       :Interface name
+Port ID                            :eth0
+Port description                   :Workstation NIC - Engineering
+System name                        :WS-ENG-004
+System description                 :Windows 10 Enterprise LTSC
+System capabilities supported      :station
+System capabilities enabled        :station
+Management address type            :IPv4
+Management address                 :10.10.80.4
+Expired time                       :74s
+Port VLAN ID(PVID)                 :800
+LLDP neighbor-information of port GE1/0/44:
+GE1/0/44 has 0 neighbor(s):
+LLDP neighbor-information of port GE1/0/45:
+GE1/0/45 has 0 neighbor(s):
+LLDP neighbor-information of port GE1/0/46:
+GE1/0/46 has 0 neighbor(s):
+LLDP neighbor-information of port GE1/0/47:
+GE1/0/47 has 0 neighbor(s):
+LLDP neighbor-information of port GE1/0/48:
+GE1/0/48 has 0 neighbor(s):
+LLDP neighbor-information of port Eth-Trunk1:
+Eth-Trunk1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :8e91-aabf-1230
+Port ID type                       :Interface name
+Port ID                            :Eth-Trunk1
+Port description                   :LAG to Distribution Layer
+System name                        :DISTRIB-SW-MAIN
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE6881EI V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.1.254
+Expired time                       :119s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port Eth-Trunk2:
+Eth-Trunk2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :9fa2-bbc0-2341
+Port ID type                       :Interface name
+Port ID                            :Eth-Trunk2
+Port description                   :LAG to Core Layer
+System name                        :CORE-SW-MAIN
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE12800 V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.1.253
+Expired time                       :117s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port XGE1/0/1:
+XGE1/0/1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :a0b3-ccd1-4563
+Port ID type                       :Interface name
+Port ID                            :TenGigabitEthernet0/0/1
+Port description                   :10G Uplink to Spine
+System name                        :SPINE-SW-01
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE8850 V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.0.1
+Expired time                       :120s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port XGE1/0/2:
+XGE1/0/2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :b1c4-dde2-5674
+Port ID type                       :Interface name
+Port ID                            :TenGigabitEthernet0/0/2
+Port description                   :10G Uplink to Spine
+System name                        :SPINE-SW-02
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE8850 V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.0.2
+Expired time                       :118s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port TenGigabitEthernet1/0/1:
+TenGigabitEthernet1/0/1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :c2d5-eef3-6785
+Port ID type                       :Interface name
+Port ID                            :XGigabitEthernet1/0/1
+Port description                   :10G Cross-connect
+System name                        :LEAF-SW-01
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE6881EI V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.2.1
+Expired time                       :115s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port TenGigabitEthernet1/0/2:
+TenGigabitEthernet1/0/2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :d3e6-ff04-7896
+Port ID type                       :Interface name
+Port ID                            :XGigabitEthernet1/0/2
+Port description                   :10G Cross-connect
+System name                        :LEAF-SW-02
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE6881EI V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.2.2
+Expired time                       :114s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port GigabitEthernet1/0/1:
+GigabitEthernet1/0/1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :e4f7-0015-89a7
+Port ID type                       :Interface name
+Port ID                            :GE0/0/1
+Port description                   :Management VLAN uplink
+System name                        :MGMT-SW-01
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S5735-L V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge
+System capabilities enabled        :bridge
+Management address type            :IPv4
+Management address                 :10.10.99.1
+Expired time                       :111s
+Port VLAN ID(PVID)                 :999
+LLDP neighbor-information of port GigabitEthernet1/0/2:
+GigabitEthernet1/0/2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :f508-1126-9ab8
+Port ID type                       :Interface name
+Port ID                            :GE0/0/2
+Port description                   :Management VLAN uplink
+System name                        :MGMT-SW-02
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (S5735-L V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge
+System capabilities enabled        :bridge
+Management address type            :IPv4
+Management address                 :10.10.99.2
+Expired time                       :109s
+Port VLAN ID(PVID)                 :999
+LLDP neighbor-information of port XGigabitEthernet1/0/1:
+XGigabitEthernet1/0/1 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :0619-2237-abc9
+Port ID type                       :Interface name
+Port ID                            :10GE1/0/1
+Port description                   :10G Backbone link
+System name                        :BACKBONE-SW-01
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE12800 V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.0.100
+Expired time                       :120s
+Port VLAN ID(PVID)                 :1
+LLDP neighbor-information of port XGigabitEthernet1/0/2:
+XGigabitEthernet1/0/2 has 1 neighbor(s):
+
+Neighbor index                     :1
+Chassis type                       :MAC address
+Chassis ID                         :172a-3348-bcda
+Port ID type                       :Interface name
+Port ID                            :10GE1/0/2
+Port description                   :10G Backbone link
+System name                        :BACKBONE-SW-02
+System description                 :Huawei Versatile Routing Platform Software
+                                    VRP (R) software, Version 8.180 (CE12800 V200R019C10SPC800)
+                                    Copyright (C) 2012-2022 Huawei Technologies Co., Ltd.
+System capabilities supported      :bridge router
+System capabilities enabled        :bridge router
+Management address type            :IPv4
+Management address                 :10.10.0.101
+Expired time                       :118s
+Port VLAN ID(PVID)                 :1

@@ -1,0 +1,417 @@
+/**
+ * NetMap Topology - Page-Specific Styles
+ * ======================================
+ * Contains only topology-specific styles that extend the base design system.
+ * Primarily SVG/D3 visualization elements, network nodes, links, and map controls.
+ *
+ * Dependencies:
+ * - design-system.css (tokens, base, components)
+ *
+ * This file should NOT contain:
+ * - CSS variable definitions (use tokens.css)
+ * - Global resets or body styles (use base.css)
+ * - Reusable component styles (use components.css)
+ */
+
+/* ============================================
+   SVG CANVAS - Topology Map Background
+   ============================================ */
+svg {
+  background: radial-gradient(ellipse at center, #0f151c 0%, var(--bg-primary) 100%) !important;
+}
+
+/* ============================================
+   MAP CONTAINER - Grid & Scanline Effects
+   Topology-specific overlay effects for map area
+   ============================================ */
+#map-container {
+  position: relative;
+}
+
+#map-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(var(--border-default) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-default) 1px, transparent 1px);
+  background-size: 50px 50px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+}
+
+#map-container::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.1) 2px,
+    rgba(0, 0, 0, 0.1) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.3;
+}
+
+/* ============================================
+   CONTROL PANEL - Topology Filters
+   Industrial-styled control panel for topology map
+   ============================================ */
+.control-panel {
+  background: linear-gradient(180deg, var(--bg-panel) 0%, #0d1218 100%) !important;
+  border: 2px solid var(--border-default) !important;
+  border-top-color: var(--amber-dim) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 rgba(245, 158, 11, 0.1) !important;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+  position: relative;
+}
+
+.control-panel::before {
+  content: 'NETWORK TOPOLOGY';
+  position: absolute;
+  top: -10px;
+  left: 16px;
+  background: var(--bg-primary);
+  padding: 2px 12px;
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--amber);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.panel-header {
+  border-bottom: 1px solid var(--border-default) !important;
+}
+
+.panel-title {
+  font-family: var(--font-display) !important;
+  color: var(--amber) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ============================================
+   FILTER CONTROLS - Topology-specific
+   ============================================ */
+.filter-label {
+  font-family: var(--font-mono) !important;
+  color: var(--text-muted) !important;
+  font-size: var(--text-xs) !important;
+  letter-spacing: 2px !important;
+}
+
+/* ============================================
+   CHECKBOX ITEMS - LED Style Toggle
+   Topology device type filters
+   ============================================ */
+.checkbox-item {
+  background: var(--bg-primary) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-sm) !important;
+  font-family: var(--font-mono) !important;
+  font-size: var(--text-sm) !important;
+  text-transform: uppercase;
+  transition: all var(--transition-base);
+}
+
+.checkbox-item:hover {
+  border-color: var(--amber-dim) !important;
+}
+
+.checkbox-item.active {
+  background: rgba(245, 158, 11, 0.1) !important;
+  border-color: var(--amber) !important;
+  color: var(--amber) !important;
+  box-shadow: 0 0 8px var(--amber-glow);
+}
+
+/* Color dots as LED indicators */
+.color-dot {
+  box-shadow: 0 0 6px currentColor;
+  animation: led-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   INFO PANEL - Device Details
+   Topology node information panel
+   ============================================ */
+.info-panel {
+  background: linear-gradient(180deg, var(--bg-panel) 0%, #0d1218 100%) !important;
+  border: 2px solid var(--border-default) !important;
+  border-left-color: var(--cyan-data) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 0 20px rgba(6, 182, 212, 0.02) !important;
+  position: relative;
+}
+
+.info-panel::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 8px;
+  height: 8px;
+  background: var(--cyan-data);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--cyan-data);
+  animation: led-blink 1.5s ease-in-out infinite;
+}
+
+.info-header {
+  border-bottom: 1px solid var(--border-default) !important;
+  padding-bottom: 12px !important;
+}
+
+.info-title {
+  font-family: var(--font-display) !important;
+  color: var(--cyan-data) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-row {
+  border-bottom: 1px solid rgba(42, 42, 42, 0.5) !important;
+  font-family: var(--font-mono) !important;
+}
+
+.info-key {
+  color: var(--text-muted) !important;
+  font-size: var(--text-sm) !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-value {
+  color: var(--green-terminal) !important;
+  font-weight: 500 !important;
+}
+
+.close-btn {
+  color: var(--text-muted) !important;
+  font-family: var(--font-mono) !important;
+}
+
+.close-btn:hover {
+  color: var(--red-alert) !important;
+}
+
+/* ============================================
+   NETWORK LINKS - SVG Line Styles
+   D3 visualization link elements
+   ============================================ */
+.link {
+  stroke: var(--border-active) !important;
+  stroke-opacity: 0.5 !important;
+  transition: all var(--transition-base);
+}
+
+.link:hover {
+  stroke: var(--amber) !important;
+  stroke-opacity: 1 !important;
+  filter: drop-shadow(0 0 4px var(--amber-glow));
+}
+
+.link.highlighted {
+  stroke: var(--amber) !important;
+  filter: drop-shadow(0 0 10px var(--amber)) !important;
+  animation: link-glow 1.5s ease-in-out infinite;
+}
+
+@keyframes link-glow {
+  0%, 100% { stroke-opacity: 1; }
+  50% { stroke-opacity: 0.7; }
+}
+
+/* ============================================
+   NETWORK NODES - SVG Circle/Icon Styles
+   D3 visualization node elements
+   ============================================ */
+.node-circle {
+  stroke-width: 2px !important;
+  transition: all var(--transition-slow) !important;
+}
+
+.node:hover .node-circle {
+  filter: drop-shadow(0 0 12px currentColor) brightness(1.2);
+}
+
+/* Node Types - Device Categories */
+.node.switch-l3 .node-circle {
+  stroke: var(--purple-system) !important;
+  fill: rgba(168, 85, 247, 0.15) !important;
+}
+
+.node.switch-l2 .node-circle {
+  stroke: var(--green-terminal) !important;
+  fill: rgba(34, 197, 94, 0.1) !important;
+}
+
+.node.router .node-circle {
+  stroke: var(--blue-link) !important;
+  fill: rgba(59, 130, 246, 0.15) !important;
+}
+
+.node.access-point .node-circle,
+.node.ap .node-circle {
+  stroke: var(--cyan-data) !important;
+  fill: rgba(6, 182, 212, 0.1) !important;
+}
+
+.node.neighbor .node-circle {
+  stroke: var(--text-muted) !important;
+  fill: rgba(82, 82, 82, 0.1) !important;
+}
+
+/* Highlighted Node State */
+.node.highlighted .node-circle {
+  filter: drop-shadow(0 0 15px currentColor) !important;
+  stroke-width: 3px !important;
+}
+
+/* Node Labels */
+.node-label {
+  font-family: var(--font-mono) !important;
+  font-size: 9px !important;
+  fill: var(--text-secondary) !important;
+  text-transform: uppercase;
+}
+
+.node.highlighted .node-label {
+  fill: var(--text-primary) !important;
+}
+
+/* Node Icons */
+.node-icon {
+  font-size: 12px !important;
+}
+
+/* ============================================
+   LEGEND - Node Type Legend
+   Topology map legend for device types
+   ============================================ */
+.legend, .stats-panel {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-md) !important;
+  font-family: var(--font-mono) !important;
+}
+
+.legend-item, .stat-item {
+  font-size: var(--text-sm) !important;
+  text-transform: uppercase;
+}
+
+/* ============================================
+   ZOOM CONTROLS - Map Navigation
+   Topology map zoom buttons
+   ============================================ */
+.zoom-controls {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.zoom-btn {
+  background: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  border: none !important;
+  font-family: var(--font-mono) !important;
+  transition: all var(--transition-base);
+}
+
+.zoom-btn:hover {
+  background: var(--bg-elevated) !important;
+  color: var(--amber) !important;
+}
+
+/* ============================================
+   SELECTION BOX - Multi-select Rectangle
+   D3 brush selection area
+   ============================================ */
+.selection-box {
+  border: 2px dashed var(--amber) !important;
+  background: var(--amber-glow) !important;
+}
+
+/* ============================================
+   MINIMAP - Overview Panel
+   Small overview map for large topologies
+   ============================================ */
+.minimap {
+  background: var(--bg-panel) !important;
+  border: 1px solid var(--border-default) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.minimap-viewport {
+  border: 1px solid var(--amber) !important;
+  background: var(--amber-glow) !important;
+}
+
+/* ============================================
+   STATUS INDICATORS - Node Status
+   Online/offline status for topology nodes
+   ============================================ */
+.status-online, .online {
+  color: var(--green-terminal) !important;
+}
+
+.status-offline, .offline {
+  color: var(--red-alert) !important;
+}
+
+.status-warning, .warning {
+  color: var(--amber) !important;
+}
+
+/* ============================================
+   ANIMATIONS - LED Effects
+   Note: led-pulse and led-blink are defined in components.css
+   Only topology-specific animations should be added here.
+   ============================================ */
+
+/* ============================================
+   PRINT STYLES - Topology-specific
+   ============================================ */
+@media print {
+  .control-panel,
+  .info-panel,
+  .zoom-controls,
+  .minimap {
+    display: none !important;
+  }
+
+  #map-container::before,
+  #map-container::after {
+    display: none !important;
+  }
+
+  svg {
+    background: white !important;
+  }
+
+  .node-label {
+    fill: #333 !important;
+  }
+
+  .link {
+    stroke: #666 !important;
+  }
+}

@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+
+# Images and assets
+public/img/
+*.png
+*.jpg
+*.ico
+
+# Minified files
+*.min.js
+*.min.css
+
+# Git worktrees
+.worktrees/
+
+# Auto-generated
+.auto-claude/
+package-lock.json
+
+# Logs
+*.log

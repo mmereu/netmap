@@ -1,0 +1,323 @@
+/**
+ * Skeleton Loader Styles - Reusable Loading States
+ *
+ * Provides skeleton loading animations for data tables and other content.
+ * Designed to match the Industrial Control Panel theme.
+ *
+ * Usage:
+ *   - Apply .skeleton-table to a <table> element for table loading states
+ *   - Use .skeleton-row for individual loading rows
+ *   - Cell widths: .skeleton-cell-short, .skeleton-cell-medium, .skeleton-cell-long
+ */
+
+/* ============================================
+   BASE SKELETON ANIMATION
+   ============================================ */
+
+/* Core shimmer animation - uses existing CSS variables */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Base skeleton class - shimmer gradient effect */
+.skeleton,
+.skeleton-cell {
+  background: linear-gradient(
+    90deg,
+    var(--bg-input, #0D0D0D) 0%,
+    var(--bg-elevated, #1A1A1A) 50%,
+    var(--bg-input, #0D0D0D) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ============================================
+   SKELETON TABLE STYLES
+   ============================================ */
+
+/* Table container for skeleton rows */
+.skeleton-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.8rem;
+}
+
+/* Skeleton table row */
+.skeleton-row {
+  display: table-row;
+  transition: opacity 0.3s ease;
+}
+
+.skeleton-row td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-default, #2A2A2A);
+  vertical-align: middle;
+}
+
+/* ============================================
+   SKELETON CELL VARIANTS
+   ============================================ */
+
+/* Base skeleton cell placeholder */
+.skeleton-cell {
+  display: inline-block;
+  height: 16px;
+  min-width: 40px;
+  vertical-align: middle;
+}
+
+/* Short width cells (status badges, icons, short codes) */
+.skeleton-cell-short {
+  width: 60px;
+  max-width: 80px;
+}
+
+/* Medium width cells (IPs, vendor names, model numbers) */
+.skeleton-cell-medium {
+  width: 120px;
+  max-width: 160px;
+}
+
+/* Long width cells (device names, descriptions, locations) */
+.skeleton-cell-long {
+  width: 180px;
+  max-width: 220px;
+}
+
+/* Full width cell (spans available space) */
+.skeleton-cell-full {
+  width: 100%;
+}
+
+/* Action cell placeholder (for button areas) */
+.skeleton-cell-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   SKELETON BADGE VARIANTS
+   ============================================ */
+
+/* Status badge skeleton */
+.skeleton-badge {
+  display: inline-block;
+  height: 24px;
+  width: 60px;
+  border-radius: 4px;
+}
+
+/* Vendor badge skeleton */
+.skeleton-vendor {
+  display: inline-block;
+  height: 22px;
+  width: 80px;
+  border-radius: 4px;
+}
+
+/* ============================================
+   INFO ROW SKELETON (for device panel)
+   ============================================ */
+
+.skeleton-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.skeleton-info-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-info-label {
+  height: 12px;
+  width: 80px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 3px;
+}
+
+.skeleton-info-value {
+  height: 14px;
+  width: 120px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-input, #0D0D0D) 0%,
+    var(--bg-elevated, #1A1A1A) 50%,
+    var(--bg-input, #0D0D0D) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 3px;
+}
+
+/* ============================================
+   INFO SECTION SKELETON (for device panel)
+   ============================================ */
+
+.skeleton-section {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+
+.skeleton-section-title {
+  height: 12px;
+  width: 100px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(
+    90deg,
+    rgba(96, 165, 250, 0.1) 0%,
+    rgba(96, 165, 250, 0.2) 50%,
+    rgba(96, 165, 250, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: 3px;
+}
+
+/* ============================================
+   LOADING STATE CONTAINER
+   ============================================ */
+
+/* Wrapper for skeleton content with fade transition */
+.skeleton-loading {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.skeleton-loading.fade-out {
+  opacity: 0;
+}
+
+/* ============================================
+   STAGGERED ANIMATION DELAYS
+   ============================================ */
+
+/* Add subtle variation to row animations for more natural feel */
+.skeleton-row:nth-child(1) .skeleton-cell { animation-delay: 0s; }
+.skeleton-row:nth-child(2) .skeleton-cell { animation-delay: 0.05s; }
+.skeleton-row:nth-child(3) .skeleton-cell { animation-delay: 0.1s; }
+.skeleton-row:nth-child(4) .skeleton-cell { animation-delay: 0.15s; }
+.skeleton-row:nth-child(5) .skeleton-cell { animation-delay: 0.2s; }
+.skeleton-row:nth-child(6) .skeleton-cell { animation-delay: 0.25s; }
+.skeleton-row:nth-child(7) .skeleton-cell { animation-delay: 0.3s; }
+.skeleton-row:nth-child(8) .skeleton-cell { animation-delay: 0.35s; }
+.skeleton-row:nth-child(9) .skeleton-cell { animation-delay: 0.4s; }
+.skeleton-row:nth-child(10) .skeleton-cell { animation-delay: 0.45s; }
+
+/* ============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================ */
+
+@media (max-width: 768px) {
+  .skeleton-cell-long {
+    width: 140px;
+    max-width: 160px;
+  }
+
+  .skeleton-cell-medium {
+    width: 100px;
+    max-width: 120px;
+  }
+
+  .skeleton-row td {
+    padding: 10px 12px;
+  }
+}
+
+/* ============================================
+   DARK THEME COMPATIBILITY
+   ============================================ */
+
+/* Alternative gradient for lighter themes (if needed) */
+.theme-light .skeleton,
+.theme-light .skeleton-cell {
+  background: linear-gradient(
+    90deg,
+    #e0e0e0 0%,
+    #f0f0f0 50%,
+    #e0e0e0 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ============================================
+   PULSE ANIMATION VARIANT
+   ============================================ */
+
+/* Alternative pulse animation for static elements */
+@keyframes skeleton-pulse {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.skeleton-pulse {
+  background: var(--bg-elevated, #1A1A1A);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+/* ============================================
+   SPECIFIC TABLE COLUMN PATTERNS
+   ============================================ */
+
+/* Discovery devices table pattern (7 columns) */
+.skeleton-devices-row .skeleton-cell:nth-child(1) { width: 160px; } /* Name */
+.skeleton-devices-row .skeleton-cell:nth-child(2) { width: 120px; } /* IP */
+.skeleton-devices-row .skeleton-cell:nth-child(3) { width: 100px; } /* Vendor */
+.skeleton-devices-row .skeleton-cell:nth-child(4) { width: 120px; } /* Model */
+.skeleton-devices-row .skeleton-cell:nth-child(5) { width: 140px; } /* Location */
+.skeleton-devices-row .skeleton-cell:nth-child(6) { width: 70px; height: 24px; } /* Status badge */
+.skeleton-devices-row .skeleton-cell:nth-child(7) { width: 32px; height: 32px; } /* Actions */
+
+/* Ports table pattern (7 columns for device panel) */
+.skeleton-ports-row .skeleton-cell:nth-child(1) { width: 80px; }   /* Port */
+.skeleton-ports-row .skeleton-cell:nth-child(2) { width: 140px; }  /* Description */
+.skeleton-ports-row .skeleton-cell:nth-child(3) { width: 60px; height: 22px; }  /* Status */
+.skeleton-ports-row .skeleton-cell:nth-child(4) { width: 80px; }   /* Speed */
+.skeleton-ports-row .skeleton-cell:nth-child(5) { width: 60px; }   /* Duplex */
+.skeleton-ports-row .skeleton-cell:nth-child(6) { width: 70px; }   /* Type */
+.skeleton-ports-row .skeleton-cell:nth-child(7) { width: 100px; }  /* Traffic */
+
+/* Neighbors/connections table pattern (4 columns) */
+.skeleton-neighbors-row .skeleton-cell:nth-child(1) { width: 80px; }   /* Local Port */
+.skeleton-neighbors-row .skeleton-cell:nth-child(2) { width: 160px; }  /* Remote Device */
+.skeleton-neighbors-row .skeleton-cell:nth-child(3) { width: 80px; }   /* Remote Port */
+.skeleton-neighbors-row .skeleton-cell:nth-child(4) { width: 100px; }  /* Link Type */
+
+/* Port view table pattern (9 columns) */
+.skeleton-portview-row .skeleton-cell:nth-child(1) { width: 50px; }   /* Index */
+.skeleton-portview-row .skeleton-cell:nth-child(2) { width: 100px; }  /* Nome */
+.skeleton-portview-row .skeleton-cell:nth-child(3) { width: 160px; }  /* Descrizione */
+.skeleton-portview-row .skeleton-cell:nth-child(4) { width: 60px; height: 22px; }  /* Stato */
+.skeleton-portview-row .skeleton-cell:nth-child(5) { width: 80px; }   /* Velocita */
+.skeleton-portview-row .skeleton-cell:nth-child(6) { width: 60px; }   /* VLAN */
+.skeleton-portview-row .skeleton-cell:nth-child(7) { width: 120px; }  /* MAC */
+.skeleton-portview-row .skeleton-cell:nth-child(8) { width: 60px; }   /* STP */
+.skeleton-portview-row .skeleton-cell:nth-child(9) { width: 60px; }   /* PoE */

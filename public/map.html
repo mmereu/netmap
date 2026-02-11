@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NetMap LLDP</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.7/dist/vis-network.min.js"></script>
+  <style>
+    body { background: #0b1021; color: #e4e7ef; }
+    #network { height: 75vh; border: 1px solid #1f2a48; border-radius: 12px; background: #0f162b; }
+    .card { background: #111a31; border: 1px solid #1f2a48; }
+    input, button, select { background: #0f162b; color: #e4e7ef; }
+    small { color: #9fb3ff; }
+    .stats { display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap; }
+    .stat-item { padding: 0.5rem; background: #1a2332; border-radius: 4px; }
+    .mode-selector { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .mode-btn { flex: 1; padding: 0.5rem; border: 1px solid #1f2a48; background: #0f162b; cursor: pointer; }
+    .mode-btn.active { background: #4b6fff; border-color: #4b6fff; }
+    .export-menu { position: relative; display: inline-block; }
+    .export-dropdown { display: none; position: absolute; background: #111a31; border: 1px solid #1f2a48; border-radius: 4px; padding: 0.5rem; z-index: 1000; margin-top: 0.25rem; }
+    .export-dropdown.show { display: block; }
+    .export-dropdown button { display: block; width: 100%; margin: 0.25rem 0; text-align: left; }
+    #nodeInfo { position: absolute; background: #111a31; border: 1px solid #1f2a48; border-radius: 4px; padding: 1rem; display: none; z-index: 1000; max-width: 300px; }
+    #nodeInfo.show { display: block; }
+  </style>
+</head>
+<body>
+<main class="container">
+  <header>
+    <h1>NetMap LLDP</h1>
+    <p>Scansione SNMP LLDP/CDP/FDP/EDP su CIDR e visualizzazione della topologia.</p>
+  </header>
+
+  <section class="card">
+    <div class="mode-selector">
+      <button class="mode-btn active" data-mode="live">Scansione Live</button>
+      <button class="mode-btn" data-mode="database">Dal Database</button>
+    </div>
+
+    <form id="mapForm">
+      <div id="liveOptions">
+        <div class="grid">
+          <label>CIDR
+            <input type="text" id="cidr" value="192.168.10.0/24" required>
+          </label>
+          <label>Concurrency
+            <input type="number" id="conc" value="5" min="1" max="10">
+          </label>
+          <label>Host limit
+            <input type="number" id="limit" value="1024" min="1" max="32768">
+          </label>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem; margin-top: 1rem; align-items: center;">
+        <button type="submit" id="submitBtn">Scansiona e disegna</button>
+        <div class="export-menu">
+          <button type="button" id="exportBtn">Export ▼</button>
+          <div class="export-dropdown" id="exportDropdown">
+            <button type="button" onclick="exportMap('json')">Export JSON</button>
+            <button type="button" onclick="exportMap('svg')">Export SVG</button>
+          </div>
+        </div>
+        <small id="status"></small>
+      </div>
+
+      <div class="stats" id="stats" style="display: none;">
+        <div class="stat-item"><strong>Nodi:</strong> <span id="statNodes">0</span></div>
+        <div class="stat-item"><strong>Link:</strong> <span id="statLinks">0</span></div>
+        <div class="stat-item"><strong>LLDP:</strong> <span id="statLLDP">0</span></div>
+        <div class="stat-item"><strong>CDP:</strong> <span id="statCDP">0</span></div>
+        <div class="stat-item"><strong>FDP:</strong> <span id="statFDP">0</span></div>
+        <div class="stat-item"><strong>EDP:</strong> <span id="statEDP">0</span></div>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" style="margin-top:1rem; position: relative;">
+    <div id="nodeInfo"></div>
+    <div id="network"></div>
+  </section>
+</main>
+
+<script>
+  const form = document.getElementById('mapForm');
+  const statusEl = document.getElementById('status');
+  const container = document.getElementById('network');
+  const nodeInfoEl = document.getElementById('nodeInfo');
+  let network;
+  let currentMode = 'live';
+  let currentData = null;
+
+  // Protocollo colors
+  const protocolColors = {
+    'LLDP': '#4b6fff',
+    'CDP': '#ff6b4b',
+    'FDP': '#ffd93d',
+    'EDP': '#6bcf7f',
+    'default': '#9fb3ff'
+  };
+
+  function setStatus(msg, isError=false) {
+    statusEl.textContent = msg;
+    statusEl.style.color = isError ? '#ff8a80' : '#9fb3ff';
+  }
+
+  function updateStats(data) {
+    const stats = document.getElementById('stats');
+    if (!data || !data.links) {
+      stats.style.display = 'none';
+      return;
+    }
+
+    // Conta link validi (con from/to o source/target)
+    const validLinks = data.links.filter(link => {
+      const from = link.from || link.source;
+      const to = link.to || link.target;
+      return from && to && from !== '' && to !== '';
+    });
+
+    const protocolCounts = { LLDP: 0, CDP: 0, FDP: 0, EDP: 0 };
+    validLinks.forEach(link => {
+      const proto = link.protocol || 'LLDP';
+      if (protocolCounts.hasOwnProperty(proto)) {
+        protocolCounts[proto]++;
+      }
+    });
+
+    document.getElementById('statNodes').textContent = data.nodes.length;
+    document.getElementById('statLinks').textContent = validLinks.length; // Usa link validi, non tutti
+    document.getElementById('statLLDP').textContent = protocolCounts.LLDP;
+    document.getElementById('statCDP').textContent = protocolCounts.CDP;
+    document.getElementById('statFDP').textContent = protocolCounts.FDP;
+    document.getElementById('statEDP').textContent = protocolCounts.EDP;
+    stats.style.display = 'flex';
+  }
+
+  function renderGraph(data) {
+    currentData = data;
+    
+    // Crea mappa di tutti i nodi per lookup veloce
+    const allNodesMap = new Map();
+    data.nodes.forEach(n => {
+      allNodesMap.set(n.id, n);
+    });
+    
+    // Trova tutti i nodi referenziati dai link (from/to)
+    const linkedNodeIds = new Set();
+    data.links.forEach(link => {
+      const from = link.from || link.source;
+      const to = link.to || link.target;
+      if (from) linkedNodeIds.add(from);
+      if (to) linkedNodeIds.add(to);
+    });
+    
+    // Filtra nodi: mostra device + neighbor referenziati dai link
+    const deviceNodes = data.nodes.filter(n => n.type === 'device');
+    const neighborNodes = data.nodes.filter(n => n.type === 'neighbor' && linkedNodeIds.has(n.id));
+    
+    // Combina device + neighbor visibili
+    const allNodes = [...deviceNodes, ...neighborNodes];
+    
+    // Crea set di ID nodi visibili per filtrare link
+    const visibleNodeIds = new Set(allNodes.map(n => n.id));
+    
+    const nodes = allNodes.map(n => ({
+      id: n.id,
+      label: n.label,
+      group: n.type === 'neighbor' ? 'neighbor' : 'device',
+      status: n.status || 'active',
+      title: `${n.label}\n${n.status || 'active'}` // Tooltip
+    }));
+
+    // Crea link solo tra nodi visibili
+    const edges = data.links.map((l, idx) => {
+      const protocol = l.protocol || 'LLDP';
+      const label = l.localIf ? `if ${l.localIf} (${protocol})` : protocol;
+      // Supporta sia from/to che source/target (compatibilità)
+      const from = l.from || l.source;
+      const to = l.to || l.target;
+      
+      // Salta link senza from o to validi
+      if (!from || !to || from === '' || to === '') {
+        return null;
+      }
+      
+      // Salta link se i nodi non sono visibili
+      if (!visibleNodeIds.has(from) || !visibleNodeIds.has(to)) {
+        return null;
+      }
+      
+      return {
+        id: idx,
+        from: from,
+        to: to,
+        label: label,
+        arrows: 'to',
+        color: { color: protocolColors[protocol] || protocolColors.default },
+        protocol: protocol
+      };
+    }).filter(e => e !== null); // Rimuovi link nulli
+    
+    console.log(`[MAP] Nodi totali: ${data.nodes.length}, nodi visibili: ${nodes.length}`);
+    console.log(`[MAP] Link totali: ${data.links.length}, link validi: ${edges.length}`);
+
+    const visData = { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) };
+    const options = {
+      physics: { 
+        stabilization: { 
+          enabled: true,
+          iterations: 200,
+          fit: true
+        },
+        barnesHut: { 
+          springLength: 200,
+          springConstant: 0.04,
+          damping: 0.09,
+          avoidOverlap: 0.5
+        },
+        enabled: true
+      },
+      layout: {
+        hierarchical: {
+          enabled: nodes.length > 10, // Usa hierarchical per reti grandi
+          sortMethod: 'directed',
+          levelSeparation: 150,
+          nodeSpacing: 200,
+          treeSpacing: 200,
+          blockShifting: true,
+          edgeMinimization: true,
+          parentCentralization: true
+        }
+      },
+      nodes: {
+        shape: 'box',
+        margin: 10,
+        color: {
+          background: '#1b2b4a',
+          border: '#4b6fff',
+          highlight: { background: '#274071', border: '#86a8ff' },
+        },
+        font: { color: '#e4e7ef', multi: 'html' },
+        borderWidth: 2,
+      },
+      edges: {
+        font: { color: '#9fb3ff', size: 10, align: 'middle' },
+        width: 2,
+        smooth: { type: 'continuous' }
+      },
+      groups: { 
+        neighbor: { 
+          color: { background: '#1f6f3f', border: '#44c482' },
+          shape: 'ellipse'
+        },
+        device: {
+          color: { background: '#1b2b4a', border: '#4b6fff' },
+          shape: 'box'
+        }
+      },
+      interaction: {
+        hover: true,
+        tooltipDelay: 200,
+        zoomView: true,
+        dragView: true
+      }
+    };
+
+    if (!network) {
+      network = new vis.Network(container, visData, options);
+      
+      // Event handlers
+      network.on('click', (params) => {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const node = nodes.find(n => n.id === nodeId);
+          if (node) {
+            showNodeInfo(node, params.event.center.x, params.event.center.y);
+          }
+        } else {
+          hideNodeInfo();
+        }
+      });
+
+      network.on('hoverNode', (params) => {
+        container.style.cursor = 'pointer';
+      });
+
+      network.on('blurNode', () => {
+        container.style.cursor = 'default';
+      });
+    } else {
+      network.setData(visData);
+    }
+
+    // Aggiorna statistiche con dati filtrati
+    const filteredData = {
+      nodes: nodes,
+      links: edges,
+      metadata: data.metadata
+    };
+    updateStats(filteredData);
+  }
+
+  function showNodeInfo(node, x, y) {
+    const rect = container.getBoundingClientRect();
+    nodeInfoEl.innerHTML = `
+      <div><strong>${node.label}</strong></div>
+      <div>ID: ${node.id}</div>
+      <div>Type: ${node.type}</div>
+      <div>Status: ${node.status || 'active'}</div>
+    `;
+    nodeInfoEl.style.left = (x - rect.left) + 'px';
+    nodeInfoEl.style.top = (y - rect.top) + 'px';
+    nodeInfoEl.classList.add('show');
+  }
+
+  function hideNodeInfo() {
+    nodeInfoEl.classList.remove('show');
+  }
+
+  // Mode selector
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      const liveOptions = document.getElementById('liveOptions');
+      const submitBtn = document.getElementById('submitBtn');
+      
+      if (currentMode === 'database') {
+        liveOptions.style.display = 'none';
+        submitBtn.textContent = 'Carica dal Database';
+      } else {
+        liveOptions.style.display = 'block';
+        submitBtn.textContent = 'Scansiona e disegna';
+      }
+    });
+  });
+
+  // Export dropdown
+  document.getElementById('exportBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('exportDropdown').classList.toggle('show');
+  });
+
+  window.exportMap = function(format) {
+    if (!currentData) {
+      alert('Nessuna mappa da esportare');
+      return;
+    }
+
+    if (format === 'json') {
+      const dataStr = JSON.stringify(currentData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `netmap-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else if (format === 'svg') {
+      window.open(`/api/map-export?fmt=svg&filename=netmap-${Date.now()}.svg`, '_blank');
+    }
+
+    document.getElementById('exportDropdown').classList.remove('show');
+  };
+
+  // Close dropdown on outside click
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.export-menu')) {
+      document.getElementById('exportDropdown').classList.remove('show');
+    }
+  });
+
+  // Verifica stato scansioni ogni 2 secondi
+  let statusCheckInterval = null;
+  function startStatusCheck() {
+    if (statusCheckInterval) clearInterval(statusCheckInterval);
+    statusCheckInterval = setInterval(async () => {
+      try {
+        const resp = await fetch('/api/scans/status');
+        const status = await resp.json();
+        if (status.active > 0) {
+          const scan = status.scans[0];
+          setStatus(`Scansione in corso: ${scan.progress}% (${scan.scanned}/${scan.total} host, ${scan.found} device trovati) - ${scan.elapsed}`, false);
+        } else {
+          clearInterval(statusCheckInterval);
+          statusCheckInterval = null;
+        }
+      } catch (err) {
+        // Ignora errori di check
+      }
+    }, 2000);
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setStatus('Caricamento...');
+
+    try {
+      let resp, data;
+
+      if (currentMode === 'database') {
+        resp = await fetch('/api/map-db?fmt=json');
+        data = await resp.json();
+      } else {
+        const cidr = document.getElementById('cidr').value.trim();
+        const conc = document.getElementById('conc').value;
+        const limit = document.getElementById('limit').value || '1024';
+        
+        const params = new URLSearchParams({
+          cidr,
+          concurrency: conc,
+          limit
+        });
+        resp = await fetch(`/api/map?${params.toString()}`);
+        const contentType = resp.headers.get('content-type') || '';
+        data = contentType.includes('application/json') 
+          ? await resp.json() 
+          : { error: await resp.text() };
+      }
+
+      if (!resp.ok || data.error) {
+        setStatus(data.error || 'Errore', true);
+        return;
+      }
+
+      setStatus(`Caricato: ${data.nodes.length} nodi, ${data.links.length} link`);
+      renderGraph(data);
+    } catch (err) {
+      setStatus(err.message, true);
+    }
+  });
+
+  // Check scansioni attive all'avvio
+  startStatusCheck();
+</script>
+</body>
+</html>

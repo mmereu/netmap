@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetMap AI - MAC Search</title>
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="/design-system.css">
+  <link rel="stylesheet" href="chat.css">
+
+  <!-- Inter Font (complementa JetBrains Mono del design system) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="/img/icons/netmap-icon.png">
+</head>
+<body>
+  <!-- ============================================
+       HEADER - Logo Iper + Titolo + Menu
+       ============================================ -->
+  <header class="chat-header">
+    <div class="header-left">
+      <a href="/" class="logo-link">
+        <div class="logo-brand">
+          <span class="logo-text">IPER</span>
+          <span class="logo-dot">.</span>
+          <span class="logo-suffix">it</span>
+        </div>
+      </a>
+      <div class="header-divider"></div>
+      <div class="header-title">
+        <i data-lucide="bot" class="title-icon"></i>
+        <span>NetMap AI Assistant</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="header-btn" id="btn-clear-chat" title="Nuova conversazione">
+        <i data-lucide="plus-circle"></i>
+        <span class="btn-label">Nuova Chat</span>
+      </button>
+      <button class="header-btn" id="btn-history" title="Storico conversazioni">
+        <i data-lucide="history"></i>
+      </button>
+      <a href="/" class="header-btn" title="Torna a NetMap">
+        <i data-lucide="home"></i>
+      </a>
+      <button class="header-btn menu-toggle" id="btn-menu" title="Menu">
+        <i data-lucide="menu"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================
+       MAIN CONTAINER - Chat + Preview
+       ============================================ -->
+  <main class="chat-main">
+    <!-- Chat Area (60%) -->
+    <section class="chat-area" id="chat-area">
+      <!-- Messaggi -->
+      <div class="messages-container" id="messages-container">
+        <!-- Messaggio di benvenuto -->
+        <div class="message bot-message welcome-message">
+          <div class="message-avatar">
+            <i data-lucide="bot"></i>
+          </div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-sender">NetMap AI</span>
+              <span class="message-time">Ora</span>
+            </div>
+            <div class="message-body">
+              <p>Ciao! Sono l'assistente NetMap. Posso aiutarti a cercare MAC address nella rete.</p>
+              <p>Scrivi un MAC address o descrivi cosa stai cercando.</p>
+              <div class="suggestions">
+                <span class="suggestion-label">Esempi:</span>
+                <button class="suggestion-chip" data-query="Dove si trova MAC aa:bb:cc:dd:ee:ff?">
+                  <i data-lucide="search"></i> Cerca MAC
+                </button>
+                <button class="suggestion-chip" data-query="Mostra tutti i MAC su PDV_Core_10">
+                  <i data-lucide="server"></i> MAC su switch
+                </button>
+                <button class="suggestion-chip" data-query="Trova dispositivi VLAN 100">
+                  <i data-lucide="network"></i> VLAN
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Input Bar -->
+      <div class="input-bar">
+        <div class="input-container">
+          <button class="input-action" id="btn-attach" title="Allega file" disabled>
+            <i data-lucide="paperclip"></i>
+          </button>
+          <input
+            type="text"
+            class="chat-input"
+            id="chat-input"
+            placeholder="Scrivi un MAC address o una domanda..."
+            autocomplete="off"
+            spellcheck="false"
+          >
+          <button class="input-send" id="btn-send" title="Invia messaggio" disabled>
+            <i data-lucide="send"></i>
+          </button>
+        </div>
+        <div class="input-hints">
+          <span class="hint-text">
+            <kbd>Enter</kbd> per inviare
+          </span>
+          <span class="hint-divider">|</span>
+          <span class="hint-text session-indicator" id="session-indicator">
+            <i data-lucide="circle" class="session-dot"></i>
+            Nuova sessione
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preview Panel (40%) -->
+    <aside class="preview-panel" id="preview-panel">
+      <div class="panel-header">
+        <h3>
+          <i data-lucide="info"></i>
+          Dettagli
+        </h3>
+        <button class="panel-close" id="btn-close-panel" title="Chiudi pannello">
+          <i data-lucide="x"></i>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div class="panel-empty" id="panel-empty">
+        <i data-lucide="mouse-pointer-click" class="empty-icon"></i>
+        <p>Seleziona un risultato per visualizzare i dettagli</p>
+      </div>
+
+      <!-- Content (nascosto di default) -->
+      <div class="panel-content" id="panel-content" style="display: none;">
+        <!-- Mini Mappa -->
+        <div class="panel-section">
+          <h4>
+            <i data-lucide="map"></i>
+            Posizione
+          </h4>
+          <div class="mini-map" id="mini-map">
+            <div class="map-placeholder">
+              <i data-lucide="map-pin"></i>
+              <span>Mappa non disponibile</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Device Info -->
+        <div class="panel-section">
+          <h4>
+            <i data-lucide="server"></i>
+            Dispositivo
+          </h4>
+          <div class="info-grid" id="device-info">
+            <div class="info-row">
+              <span class="info-label">Nome</span>
+              <span class="info-value" id="info-device-name">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">IP</span>
+              <span class="info-value mono" id="info-device-ip">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Vendor</span>
+              <span class="info-value" id="info-device-vendor">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Modello</span>
+              <span class="info-value" id="info-device-model">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Status</span>
+              <span class="info-value status-badge" id="info-device-status">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Porta Info -->
+        <div class="panel-section">
+          <h4>
+            <i data-lucide="plug"></i>
+            Porta
+          </h4>
+          <div class="info-grid" id="port-info">
+            <div class="info-row">
+              <span class="info-label">Porta</span>
+              <span class="info-value mono" id="info-port-name">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">VLAN</span>
+              <span class="info-value" id="info-port-vlan">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Speed</span>
+              <span class="info-value" id="info-port-speed">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Status</span>
+              <span class="info-value status-badge" id="info-port-status">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Storico -->
+        <div class="panel-section">
+          <h4>
+            <i data-lucide="history"></i>
+            Storico MAC
+          </h4>
+          <div class="history-list" id="mac-history">
+            <div class="history-empty">Nessuno storico disponibile</div>
+          </div>
+        </div>
+
+        <!-- Azioni Rapide -->
+        <div class="panel-section actions-section">
+          <h4>
+            <i data-lucide="zap"></i>
+            Azioni Rapide
+          </h4>
+          <div class="quick-actions" id="quick-actions">
+            <button class="action-btn" id="action-topology" disabled>
+              <i data-lucide="globe"></i>
+              <span>Topologia</span>
+            </button>
+            <button class="action-btn" id="action-refresh" disabled>
+              <i data-lucide="refresh-cw"></i>
+              <span>Refresh</span>
+            </button>
+            <button class="action-btn" id="action-ping" disabled>
+              <i data-lucide="activity"></i>
+              <span>Ping</span>
+            </button>
+            <button class="action-btn" id="action-copy" disabled>
+              <i data-lucide="copy"></i>
+              <span>Copia</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Mobile Preview Toggle -->
+    <button class="preview-toggle" id="btn-preview-toggle" style="display: none;">
+      <i data-lucide="panel-right"></i>
+    </button>
+  </main>
+
+  <!-- ============================================
+       TOAST NOTIFICATIONS
+       ============================================ -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ============================================
+       SCRIPTS
+       ============================================ -->
+  <script src="chat.js"></script>
+</body>
+</html>
