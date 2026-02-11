@@ -1,0 +1,35 @@
+{
+  "name": "netmap",
+  "version": "1.0.0",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "NODE_ENV=production node server.js",
+    "test": "node --test lib/__tests__/*.test.js",
+    "test:watch": "node --test --watch lib/__tests__/*.test.js",
+    "bench": "node lib/__tests__/huaweiLldpParser.bench.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@openai/agents": "^0.3.7",
+    "better-sqlite3": "^12.4.6",
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "ip-cidr": "^4.0.2",
+    "mysql2": "^3.15.3",
+    "net-snmp": "^3.26.0",
+    "node-fetch": "^3.3.2",
+    "openai": "^6.15.0",
+    "socket.io": "^4.8.1",
+    "ssh2": "^1.17.0",
+    "telnet-client": "^2.2.9",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}

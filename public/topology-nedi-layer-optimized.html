@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Topology - NeDi Layer (Optimized)</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+    }
+    #map-container {
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    .link {
+      stroke-opacity: 0.8;
+      fill: none;
+    }
+    .link-label {
+      font-size: 8px;
+      fill: #333;
+      font-weight: 500;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.9),
+                   -1px -1px 2px rgba(255,255,255,0.9),
+                   1px -1px 2px rgba(255,255,255,0.9),
+                   -1px 1px 2px rgba(255,255,255,0.9);
+    }
+    .node-label {
+      font-size: 10px;
+      font-weight: bold;
+      fill: #333;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    .node {
+      cursor: pointer;
+    }
+    .node:hover {
+      filter: brightness(1.2);
+    }
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 280px;
+    }
+    #controls h3 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    #controls label {
+      display: block;
+      margin: 5px 0;
+      font-size: 12px;
+      color: #555;
+    }
+    #controls input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    #controls .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #controls .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #stats {
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    #stats span {
+      display: inline-block;
+      margin-right: 15px;
+      font-weight: bold;
+    }
+    #perf-stats {
+      background: #e8f4f8;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      margin-top: 5px;
+      color: #0066cc;
+    }
+    #legend {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      z-index: 1000;
+    }
+    #legend h4 {
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+    }
+    #zoom-controls {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 1000;
+    }
+    #zoom-controls button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #zoom-controls button:hover {
+      background: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div id="map-container">
+    <svg id="topology"></svg>
+  </div>
+
+  <div id="controls">
+    <h3>🗺️ Network Topology (Optimized)</h3>
+    <label>Cerca:
+      <input type="text" id="search" placeholder="Nome, IP...">
+    </label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="showL3" checked> L3</label>
+      <label><input type="checkbox" id="showL2" checked> L2</label>
+      <label><input type="checkbox" id="showRouter" checked> Router</label>
+      <label><input type="checkbox" id="showNeighbor" checked> Neighbor</label>
+      <label><input type="checkbox" id="showUnknown"> Unknown</label>
+    </div>
+    <label>Etichette:
+      <select id="labelMode">
+        <option value="name">Nome</option>
+        <option value="ip">IP</option>
+        <option value="both">Nome + IP</option>
+        <option value="none">Nessuna</option>
+      </select>
+    </label>
+    <div id="stats">
+      <span id="nodeCount">Nodi: 0</span>
+      <span id="linkCount">Link: 0</span>
+    </div>
+    <div id="perf-stats">
+      <div>Render: <span id="renderTime">0ms</span></div>
+      <div>FPS: <span id="fps">60</span></div>
+    </div>
+  </div>
+
+  <div id="legend">
+    <h4>Legenda</h4>
+    <div class="legend-item"><img src="img/dev/s3mg.png" class="legend-icon"> Switch L3</div>
+    <div class="legend-item"><img src="img/dev/s2mg.png" class="legend-icon"> Switch L2</div>
+    <div class="legend-item"><img src="img/dev/rtmg.png" class="legend-icon"> Router</div>
+    <div class="legend-item"><img src="img/dev/wamg.png" class="legend-icon"> Access Point</div>
+    <div class="legend-item"><img src="img/dev/smsu.png" class="legend-icon"> Unknown</div>
+  </div>
+
+  <div id="zoom-controls">
+    <button id="zoomIn">+</button>
+    <button id="zoomOut">−</button>
+    <button id="zoomReset">⟲</button>
+  </div>
+
+  <script>
+    // ========== UTILITY FUNCTIONS ==========
+    // Debounce function per ottimizzare eventi frequenti
+    function debounce(func, wait) {
+      let timeout;
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout);
+          func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+      };
+    }
+
+    // Throttle function per limitare frequenza eventi
+    function throttle(func, limit) {
+      let inThrottle;
+      return function(...args) {
+        if (!inThrottle) {
+          func.apply(this, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      };
+    }
+
+    // Performance monitor
+    class PerformanceMonitor {
+      constructor() {
+        this.frames = [];
+        this.lastTime = performance.now();
+      }
+
+      tick() {
+        const now = performance.now();
+        const delta = now - this.lastTime;
+        this.lastTime = now;
+        this.frames.push(delta);
+        if (this.frames.length > 60) this.frames.shift();
+      }
+
+      getFPS() {
+        if (this.frames.length === 0) return 60;
+        const avg = this.frames.reduce((a, b) => a + b, 0) / this.frames.length;
+        return Math.round(1000 / avg);
+      }
+    }
+
+    const perfMonitor = new PerformanceMonitor();
+
+    // ========== D3.JS SETUP ==========
+    const svg = d3.select('#topology');
+    const container = svg.append('g');
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    let currentTransform = d3.zoomIdentity;
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', throttle((event) => {
+        currentTransform = event.transform;
+        container.attr('transform', currentTransform);
+        perfMonitor.tick();
+      }, 16)); // 60fps max
+
+    svg.call(zoom);
+
+    // Zoom controls ottimizzati
+    d3.select('#zoomIn').on('click', () => {
+      svg.transition().duration(300).call(zoom.scaleBy, 1.3);
+    });
+    d3.select('#zoomOut').on('click', () => {
+      svg.transition().duration(300).call(zoom.scaleBy, 0.7);
+    });
+    d3.select('#zoomReset').on('click', () => {
+      svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity);
+    });
+
+    let allNodes = [];
+    let allLinks = [];
+    let filteredNodes = [];
+    let filteredLinks = [];
+
+    // Cache per gradients
+    const gradientCache = new Map();
+
+    function getDeviceIcon(node) {
+      const sysname = (node.sysname || '').toLowerCase();
+      const label = (node.label || '').toLowerCase();
+      const devStatus = (node.status || '').toLowerCase();
+      const type = (node.type || '').toLowerCase();
+
+      if (sysname.includes('l3') || sysname.includes('core') || sysname.includes('6730')) {
+        return 'img/dev/s3mg.png';
+      }
+      if (type === 'router' || sysname.includes('router')) {
+        return 'img/dev/rtmg.png';
+      }
+      if (sysname.includes('ap-') || sysname.includes('pdv') || sysname.includes('-ap')) {
+        return 'img/dev/wamg.png';
+      }
+      if (devStatus === 'neighbor' || type === 'neighbor') {
+        return 'img/dev/smsu.png';
+      }
+      if (type === 'l2' || sysname.includes('l2') || label.includes('rack')) {
+        return 'img/dev/s2mg.png';
+      }
+      return 'img/dev/s2mg.png';
+    }
+
+    function getLinkColor(link) {
+      const speed = link.speed || 0;
+      if (speed >= 10000) return '#800080';
+      if (speed >= 1000) return '#cc0000';
+      if (speed >= 100) return '#ff8c00';
+      if (speed >= 10) return '#0066cc';
+      return '#666666';
+    }
+
+    function getLinkWidth(link) {
+      const speed = link.speed || 0;
+      if (speed >= 10000) return 4;
+      if (speed >= 1000) return 3;
+      if (speed >= 100) return 2;
+      return 1;
+    }
+
+    async function loadData() {
+      try {
+        const start = performance.now();
+        const response = await fetch('/api/map-db?lev=4&mde=f');
+        const data = await response.json();
+        const fetchTime = performance.now() - start;
+        console.log(`[PERF] Data fetch: ${fetchTime.toFixed(2)}ms`);
+
+        allNodes = data.nodes.map((n, i) => ({
+          ...n,
+          index: i,
+          icon: getDeviceIcon(n),
+          level: typeof n.level === 'number' ? n.level : 0
+        }));
+
+        const nodeById = new Map();
+        allNodes.forEach(n => {
+          nodeById.set(n.id, n);
+          if (n.ip) nodeById.set(n.ip, n);
+          if (n.label) nodeById.set(n.label, n);
+          if (n.sysname) nodeById.set(n.sysname, n);
+        });
+
+        allLinks = [];
+        for (const l of data.links) {
+          const sourceNode = nodeById.get(l.source) || nodeById.get(l.from);
+          const targetNode = nodeById.get(l.target) || nodeById.get(l.to);
+          const di = l.di || l.localIf || '';
+          const ni = l.ni || l.remoteIf || '';
+          if (sourceNode && targetNode && sourceNode !== targetNode) {
+            allLinks.push({
+              source: sourceNode,
+              target: targetNode,
+              di,
+              ni,
+              protocol: l.protocol || '',
+              speed: l.speed || 0
+            });
+          }
+        }
+
+        const totalTime = performance.now() - start;
+        console.log(`[PERF] Total load: ${totalTime.toFixed(2)}ms, Nodes: ${allNodes.length}, Links: ${allLinks.length}`);
+
+        filterAndRender();
+      } catch (err) {
+        console.error('Errore caricamento dati:', err);
+      }
+    }
+
+    // Debounced filter and render
+    const filterAndRender = debounce(() => {
+      const start = performance.now();
+
+      const search = document.getElementById('search').value.toLowerCase();
+      const showL3 = document.getElementById('showL3').checked;
+      const showL2 = document.getElementById('showL2').checked;
+      const showRouter = document.getElementById('showRouter').checked;
+      const showNeighbor = document.getElementById('showNeighbor').checked;
+      const showUnknown = document.getElementById('showUnknown').checked;
+
+      filteredNodes = allNodes.filter(n => {
+        const type = (n.type || '').toLowerCase();
+        const label = (n.label || n.sysname || '').toLowerCase();
+        const ip = n.ip || n.id || '';
+        const sysname = (n.sysname || '').toLowerCase();
+        const status = (n.status || '').toLowerCase();
+
+        const isMacAddress = /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/i.test(label);
+        if (isMacAddress) return false;
+
+        const isAp = sysname.includes('ap-') || sysname.includes('pdv') || sysname.includes('-ap');
+
+        const isSwitch =
+          sysname.includes('l2_') ||
+          sysname.includes('l3_') ||
+          sysname.includes('rack') ||
+          sysname.includes('switch');
+
+        const isRouter =
+          type === 'router' ||
+          sysname.includes('router') ||
+          label.includes('router');
+
+        const isInfra = isSwitch || isRouter || isAp;
+        if (!isInfra) return false;
+
+        if (isSwitch && !showL2 && !showL3) return false;
+        if (isRouter && !showRouter) return false;
+
+        if (!isAp && (type === 'neighbor' || status === 'neighbor') && !showNeighbor) return false;
+        if (type === 'unknown' && !showUnknown) return false;
+
+        if (search && !label.includes(search) && !ip.includes(search)) return false;
+
+        return true;
+      });
+
+      const nodeIds = new Set(filteredNodes.map(n => n.id));
+
+      filteredLinks = allLinks.filter(l =>
+        nodeIds.has(l.source.id) && nodeIds.has(l.target.id)
+      );
+
+      document.getElementById('nodeCount').textContent = `Nodi: ${filteredNodes.length}`;
+      document.getElementById('linkCount').textContent = `Link: ${filteredLinks.length}`;
+
+      const filterTime = performance.now() - start;
+      console.log(`[PERF] Filter: ${filterTime.toFixed(2)}ms`);
+
+      render();
+    }, 150); // Debounce 150ms
+
+    function render() {
+      const renderStart = performance.now();
+
+      // Cancella tutto con un solo comando
+      container.selectAll('*').remove();
+
+      const labelMode = document.getElementById('labelMode').value;
+
+      // SVG defs per gradients (cache ridotta)
+      const defs = container.append('defs');
+
+      // Crea solo gradients necessari (pre-calcolati)
+      const colors = ['#666666', '#0066cc', '#ff8c00', '#cc0000', '#800080'];
+      let gradientId = 0;
+
+      const createBidirGradient = (color1, color2) => {
+        const key = `${color1}-${color2}`;
+        if (gradientCache.has(key)) return gradientCache.get(key);
+
+        const id = `bidir-gradient-${gradientId++}`;
+        const gradient = defs.append('linearGradient')
+          .attr('id', id)
+          .attr('x1', '0%')
+          .attr('y1', '0%')
+          .attr('x2', '100%')
+          .attr('y2', '0%');
+
+        gradient.append('stop')
+          .attr('offset', '0%')
+          .attr('stop-color', color1);
+
+        gradient.append('stop')
+          .attr('offset', '50%')
+          .attr('stop-color', color1);
+
+        gradient.append('stop')
+          .attr('offset', '50%')
+          .attr('stop-color', color2);
+
+        gradient.append('stop')
+          .attr('offset', '100%')
+          .attr('stop-color', color2);
+
+        gradientCache.set(key, id);
+        return id;
+      };
+
+      // Pre-crea solo gradients comuni
+      colors.forEach((c1, i) => {
+        colors.slice(i + 1).forEach(c2 => {
+          createBidirGradient(c1, c2);
+        });
+      });
+
+      const baseY = 120;
+      // Parametri adattivi basati sulle dimensioni e numero di nodi
+      const totalNodes = filteredNodes.length;
+      const maxPerRow = Math.max(6, Math.min(16, Math.ceil(Math.sqrt(totalNodes * 1.5))));
+      const availableWidth = width - 100; // Margini
+      const colSpacing = Math.max(70, Math.min(120, availableWidth / (maxPerRow + 1)));
+      const rowSpacing = Math.max(80, Math.min(110, height / 8));
+      const levelHeight = Math.max(130, Math.min(180, height / 5));
+
+      const nodesByLevel = new Map();
+      filteredNodes.forEach((n) => {
+        const lvl = Number.isFinite(n.level) ? n.level : 0;
+        if (!nodesByLevel.has(lvl)) nodesByLevel.set(lvl, []);
+        nodesByLevel.get(lvl).push(n);
+      });
+
+      nodesByLevel.forEach((nodesAtLevel, lvl) => {
+        const centerX = width / 2;
+        const startY = baseY + lvl * levelHeight;
+        // Calcola maxPerRow adattivo per livello
+        const levelMaxPerRow = Math.max(4, Math.min(maxPerRow, Math.ceil(Math.sqrt(nodesAtLevel.length * 2))));
+        const levelColSpacing = Math.max(60, availableWidth / (levelMaxPerRow + 1));
+
+        nodesAtLevel.forEach((n, idx) => {
+          const row = Math.floor(idx / levelMaxPerRow);
+          const col = idx % levelMaxPerRow;
+          const rowY = startY + row * rowSpacing;
+          const totalCols = Math.min(nodesAtLevel.length - row * levelMaxPerRow, levelMaxPerRow);
+          const offsetX = (col - (totalCols - 1) / 2) * levelColSpacing;
+
+          n.x = centerX + offsetX;
+          n.y = rowY;
+        });
+      });
+
+      // Fissa il core *.251 in ALTO e CENTRATO
+      const coreNode = filteredNodes.find(n =>
+        (n.ip && n.ip.endsWith('.251')) ||
+        ((n.sysname || '').toLowerCase().includes('core'))
+      );
+      if (coreNode) {
+        coreNode.x = width / 2;
+        coreNode.y = baseY;
+      }
+
+      // Collision avoidance: separa nodi troppo vicini
+      const minSeparation = 55;
+      const iterations = 4;
+      for (let iter = 0; iter < iterations; iter++) {
+        filteredNodes.forEach((n1, i) => {
+          let pushX = 0, pushY = 0;
+          filteredNodes.forEach((n2, j) => {
+            if (i === j) return;
+            const dx = n2.x - n1.x;
+            const dy = n2.y - n1.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < minSeparation && dist > 0) {
+              const push = (minSeparation - dist) / minSeparation * 0.5;
+              pushX -= (dx / dist) * push * minSeparation;
+              pushY -= (dy / dist) * push * minSeparation;
+            }
+          });
+          n1.x = Math.max(50, Math.min(width - 50, n1.x + pushX));
+          n1.y = Math.max(50, Math.min(height - 50, n1.y + pushY));
+        });
+      }
+
+      // Identifica link paralleli
+      const linkGroups = new Map();
+      filteredLinks.forEach(link => {
+        const key1 = `${link.source.id}-${link.target.id}`;
+        const key2 = `${link.target.id}-${link.source.id}`;
+
+        if (linkGroups.has(key1)) {
+          linkGroups.get(key1).push(link);
+        } else if (linkGroups.has(key2)) {
+          linkGroups.get(key2).push(link);
+        } else {
+          linkGroups.set(key1, [link]);
+        }
+      });
+
+      linkGroups.forEach(group => {
+        group.forEach((link, idx) => {
+          link.linkIndex = idx;
+          link.totalLinks = group.length;
+        });
+      });
+
+      const calculateLinkOffset = (d) => {
+        if (d.totalLinks === 1) return 0;
+
+        const maxOffset = 40;
+        const spacing = maxOffset / (d.totalLinks - 1);
+        const centerIndex = (d.totalLinks - 1) / 2;
+
+        return (d.linkIndex - centerIndex) * spacing;
+      };
+
+      const linkArc = (d) => {
+        const offset = calculateLinkOffset(d);
+
+        if (Math.abs(offset) < 0.1) {
+          return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+        }
+
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dr = Math.sqrt(dx * dx + dy * dy);
+
+        if (dr === 0) return `M${d.source.x},${d.source.y}`;
+
+        const midX = (d.source.x + d.target.x) / 2;
+        const midY = (d.source.y + d.target.y) / 2;
+
+        const perpX = -dy / dr;
+        const perpY = dx / dr;
+
+        const ctrlX = midX + perpX * offset;
+        const ctrlY = midY + perpY * offset;
+
+        return `M${d.source.x},${d.source.y} Q${ctrlX},${ctrlY} ${d.target.x},${d.target.y}`;
+      };
+
+      const getLinkStroke = (d) => {
+        if (d.forward_status && d.reverse_status && d.forward_status !== d.reverse_status) {
+          const forwardColor = getLinkColor({ status: d.forward_status, speed: d.speed });
+          const reverseColor = getLinkColor({ status: d.reverse_status, speed: d.speed });
+
+          const key = `${forwardColor}-${reverseColor}`;
+          if (gradientCache.has(key)) {
+            return `url(#${gradientCache.get(key)})`;
+          }
+
+          const newGradientId = createBidirGradient(forwardColor, reverseColor);
+          return `url(#${newGradientId})`;
+        }
+
+        return getLinkColor(d);
+      };
+
+      // Usa requestAnimationFrame per rendering smooth
+      requestAnimationFrame(() => {
+        const links = container.append('g')
+          .attr('class', 'links')
+          .selectAll('path')
+          .data(filteredLinks)
+          .enter()
+          .append('path')
+          .attr('class', 'link')
+          .attr('stroke', d => getLinkStroke(d))
+          .attr('stroke-width', d => getLinkWidth(d))
+          .attr('fill', 'none')
+          .attr('d', linkArc);
+
+        const ifipos = 25;
+
+        const shortIfName = (name) => {
+          if (!name || typeof name !== 'string') return '';
+          const trimmed = name.trim();
+          const lower = trimmed.toLowerCase();
+
+          // Filtra MAC addresses formato standard (aa:bb:cc:dd:ee:ff)
+          if (/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(trimmed)) return '';
+
+          // Filtra MAC addresses formato Huawei (xxxx-xxxx-xxxx)
+          if (/^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(trimmed)) return '';
+
+          // Filtra valori puramente numerici (es. "1", "15")
+          if (/^\d+$/.test(trimmed)) return '';
+
+          // Filtra console e loopback
+          if (lower.includes('console') || lower.includes('con0') || lower === 'con') return '';
+          if (lower.includes('loopback') || /^lo\d*$/i.test(trimmed)) return '';
+
+          // Filtra nomi troppo lunghi (probabilmente descrizioni)
+          if (trimmed.length > 25) return '';
+
+          // Filtra valori nulli o placeholder
+          if (lower === 'null' || lower === '-' || lower === 'n/a' || lower === 'unknown') return '';
+
+          // Filtra hostname (contiene underscore tipico dei device ma non è interfaccia)
+          if (trimmed.includes('_') && !trimmed.includes('/')) return '';
+
+          // Abbrevia nomi standard Huawei/Cisco
+          return trimmed
+            .replace(/^GigabitEthernet/i, 'Gi')
+            .replace(/^FastEthernet/i, 'Fa')
+            .replace(/^TenGigabitEthernet/i, 'Te')
+            .replace(/^TwentyFiveGigE/i, '25Gi')
+            .replace(/^FortyGigabitEthernet/i, '40Gi')
+            .replace(/^HundredGigE/i, '100Gi')
+            .replace(/^Ethernet/i, 'Et')
+            .replace(/^XGigabitEthernet/i, 'XGi')
+            .replace(/^GE/i, 'Gi')
+            .replace(/^XGE/i, 'XGi')
+            .replace(/^MEth/i, 'MEth')
+            .replace(/^Vlanif/i, 'Vlan');
+        };
+
+        const lnk = container.append('g')
+          .selectAll('path')
+          .data(filteredLinks)
+          .enter()
+          .append('path')
+          .attr('class', 'lnk')
+          .attr('id', (d, i) => `lnk${i}`)
+          .style('fill', 'none')
+          .style('pointer-events', 'none')
+          .attr('d', linkArc);
+
+        const lnksta = container.append('g')
+          .selectAll('text')
+          .data(filteredLinks)
+          .enter()
+          .append('text')
+          .attr('class', 'link-label')
+          .attr('text-anchor', 'start');
+
+        lnksta.append('textPath')
+          .attr('xlink:href', (d, i) => `#lnk${i}`)
+          .style('pointer-events', 'none')
+          .attr('startOffset', `${ifipos}%`)
+          .text(d => shortIfName(d.di));
+
+        const lnkend = container.append('g')
+          .selectAll('text')
+          .data(filteredLinks)
+          .enter()
+          .append('text')
+          .attr('class', 'link-label')
+          .attr('text-anchor', 'end');
+
+        lnkend.append('textPath')
+          .attr('xlink:href', (d, i) => `#lnk${i}`)
+          .style('pointer-events', 'none')
+          .attr('startOffset', `${100 - ifipos}%`)
+          .text(d => shortIfName(d.ni));
+
+        const nodes = container.append('g')
+          .attr('class', 'nodes')
+          .selectAll('g')
+          .data(filteredNodes)
+          .enter()
+          .append('g')
+          .attr('class', 'node')
+          .attr('transform', d => `translate(${d.x},${d.y})`);
+
+        nodes.append('image')
+          .attr('xlink:href', d => d.icon)
+          .attr('x', -16)
+          .attr('y', -16)
+          .attr('width', 32)
+          .attr('height', 32);
+
+        nodes.append('text')
+          .attr('class', 'node-label')
+          .attr('dy', 28)
+          .text(d => {
+            const name = d.sysname || d.label || '';
+            const ip = d.ip || '';
+            if (labelMode === 'ip') return ip;
+            if (labelMode === 'both') return name ? `${name} ${ip}` : ip;
+            if (labelMode === 'none') return '';
+            return name;
+          });
+
+        const renderTime = performance.now() - renderStart;
+        document.getElementById('renderTime').textContent = `${renderTime.toFixed(2)}ms`;
+        document.getElementById('fps').textContent = perfMonitor.getFPS();
+
+        console.log(`[PERF] Render complete: ${renderTime.toFixed(2)}ms`);
+      });
+    }
+
+    // Event listeners con debounce
+    document.getElementById('search').addEventListener('input', filterAndRender);
+    document.getElementById('showL3').addEventListener('change', filterAndRender);
+    document.getElementById('showL2').addEventListener('change', filterAndRender);
+    document.getElementById('showRouter').addEventListener('change', filterAndRender);
+    document.getElementById('showNeighbor').addEventListener('change', filterAndRender);
+    document.getElementById('showUnknown').addEventListener('change', filterAndRender);
+    document.getElementById('labelMode').addEventListener('change', filterAndRender);
+
+    // FPS monitor loop
+    setInterval(() => {
+      document.getElementById('fps').textContent = perfMonitor.getFPS();
+    }, 1000);
+
+    loadData();
+  </script>
+</body>
+</html>

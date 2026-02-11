@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Topology - NeDi Layer</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <link rel="stylesheet" href="tooltip-styles.css">
+  <link rel="stylesheet" href="device-panel.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+    }
+    #map-container {
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    .link {
+      stroke-opacity: 0.8;
+      fill: none;
+    }
+    .link-label {
+      font-size: 9px;
+      fill: #a0d4ff;
+      font-weight: 600;
+      pointer-events: none;
+      text-shadow: 0 0 3px rgba(0,0,0,0.9),
+                   1px 1px 2px rgba(0,0,0,0.8),
+                   -1px -1px 2px rgba(0,0,0,0.8);
+      display: none; /* Nascoste di default */
+    }
+    .show-interfaces .link-label {
+      display: block; /* Visibili quando attivato */
+    }
+    .node-label {
+      font-size: 10px;
+      font-weight: bold;
+      fill: #333;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    .node-label.ap-label {
+      fill: #0066cc; /* Blu per Access Point */
+      font-weight: bold;
+    }
+    .node {
+      cursor: pointer;
+    }
+    .node:hover {
+      filter: brightness(1.2);
+      /* transform: scale rimosso - causava blink */
+      transition: all 0.2s ease;
+    }
+    .node.dragging {
+      cursor: grabbing;
+      filter: brightness(1.3) drop-shadow(0 0 8px rgba(0,150,255,0.8));
+    }
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 280px;
+    }
+    #controls h3 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    #controls label {
+      display: block;
+      margin: 5px 0;
+      font-size: 12px;
+      color: #555;
+    }
+    #controls input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    #controls select#siteFilter {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-size: 12px;
+    }
+    #controls .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #controls .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #controls .radio-group {
+      display: flex;
+      gap: 15px;
+      margin: 8px 0;
+    }
+    #controls .radio-group label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+    }
+    .building-box {
+      fill: rgba(173, 216, 230, 0.1);
+      stroke: #4682b4;
+      stroke-width: 2;
+      rx: 8;
+      ry: 8;
+    }
+    .building-label {
+      font-size: 12px;
+      font-weight: bold;
+      fill: #4682b4;
+      text-anchor: middle;
+    }
+    #stats {
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    #stats span {
+      display: inline-block;
+      margin-right: 15px;
+      font-weight: bold;
+    }
+    #controls .export-section {
+      border-top: 1px solid #eee;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    #controls .export-section h4 {
+      font-size: 12px;
+      margin-bottom: 8px;
+      color: #555;
+    }
+    #controls .export-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    #controls .export-buttons button {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    #controls .export-buttons button:hover {
+      background: #f0f0f0;
+      border-color: #999;
+    }
+    #controls .export-buttons button:active {
+      transform: scale(0.95);
+    }
+    #controls .export-options {
+      display: flex;
+      gap: 10px;
+      margin-top: 5px;
+      font-size: 11px;
+    }
+    #legend {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      z-index: 1000;
+    }
+    #legend h4 {
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+    }
+    #zoom-controls {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 1000;
+    }
+    #zoom-controls button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #zoom-controls button:hover {
+      background: #f0f0f0;
+    }
+    /* Visually hidden but accessible to screen readers */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="map-container" role="application" aria-label="Mappa interattiva della topologia di rete">
+    <svg id="topology" aria-label="Diagramma topologia di rete"></svg>
+  </div>
+  <div id="tooltip"></div>
+
+  <div id="controls" role="toolbar" aria-label="Controlli topologia di rete">
+    <h3>🗺️ Network Topology</h3>
+    <!-- Layout Ring sempre attivo -->
+    <input type="hidden" name="layoutMode" value="ring">
+    <label for="siteFilter">Sito:</label>
+    <select id="siteFilter" aria-label="Filtra dispositivi per sito">
+      <option value="">Tutti i siti</option>
+    </select>
+    <label for="search">Cerca:</label>
+    <input type="text" id="search" placeholder="Nome, IP..." aria-label="Cerca dispositivi per nome o indirizzo IP">
+    <div class="checkbox-group" role="group" aria-label="Filtro tipi dispositivo">
+      <label><input type="checkbox" id="showL3" checked aria-label="Mostra switch Layer 3"> L3</label>
+      <label><input type="checkbox" id="showL2" checked aria-label="Mostra switch Layer 2"> L2</label>
+      <label><input type="checkbox" id="showRouter" checked aria-label="Mostra router"> Router</label>
+      <label><input type="checkbox" id="showNeighbor" checked aria-label="Mostra dispositivi neighbor"> Neighbor</label>
+      <label><input type="checkbox" id="showAP" aria-label="Mostra Access Point"> AP</label>
+      <label><input type="checkbox" id="showUnknown" aria-label="Mostra dispositivi sconosciuti"> Unknown</label>
+    </div>
+    <label for="labelMode">Etichette:</label>
+    <select id="labelMode" aria-label="Seleziona modalità etichette dispositivi">
+      <option value="name">Nome</option>
+      <option value="ip">IP</option>
+      <option value="both">Nome + IP</option>
+      <option value="none">Nessuna</option>
+    </select>
+    <label><input type="checkbox" id="showInterfaces" aria-label="Mostra o nascondi nomi interfacce sui collegamenti"> Mostra Interfacce</label>
+    <div id="stats">
+      <span id="nodeCount">Nodi: 0</span>
+      <span id="linkCount">Link: 0</span>
+    </div>
+
+    <section class="export-section" aria-label="Esportazione mappa">
+      <h4>📥 Export Mappa</h4>
+      <div class="export-buttons">
+        <button id="exportSVG" title="Esporta come SVG vettoriale" aria-label="Esporta mappa in formato SVG vettoriale">SVG</button>
+        <button id="exportPNG" title="Esporta come immagine PNG" aria-label="Esporta mappa in formato PNG immagine">PNG</button>
+      </div>
+      <div class="export-options" role="group" aria-label="Modalità esportazione mappa">
+        <label><input type="radio" name="exportMode" value="viewport" checked aria-label="Esporta solo area visibile"> Viewport</label>
+        <label><input type="radio" name="exportMode" value="full" aria-label="Esporta mappa completa"> Full</label>
+      </div>
+    </section>
+  </div>
+
+  <section id="legend" aria-label="Legenda icone dispositivi">
+    <h4>Legenda</h4>
+    <div class="legend-item"><img src="img/dev/s3mg.png" class="legend-icon" alt="Icona Switch L3"> Switch L3</div>
+    <div class="legend-item"><img src="img/dev/s2mg.png" class="legend-icon" alt="Icona Switch L2"> Switch L2</div>
+    <div class="legend-item"><img src="img/dev/rtmg.png" class="legend-icon" alt="Icona Router"> Router</div>
+    <div class="legend-item"><img src="img/dev/wamg.png" class="legend-icon" alt="Icona Access Point"> Access Point</div>
+    <div class="legend-item"><img src="img/dev/smsu.png" class="legend-icon" alt="Icona dispositivo sconosciuto"> Unknown</div>
+  </section>
+
+  <div id="zoom-controls" role="toolbar" aria-label="Controlli zoom mappa">
+    <button id="zoomIn" aria-label="Zoom avanti">+</button>
+    <button id="zoomOut" aria-label="Zoom indietro">−</button>
+    <button id="zoomReset" aria-label="Reimposta zoom">⟲</button>
+  </div>
+
+  <script>
+    const svg = d3.select('#topology');
+    const container = svg.append('g');
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const zoom = d3.zoom()
+      .scaleExtent([0.1, 4])
+      .on('zoom', (event) => {
+        container.attr('transform', event.transform);
+      });
+
+    svg.call(zoom);
+    d3.select('#zoomIn').on('click', () => svg.transition().call(zoom.scaleBy, 1.3));
+    d3.select('#zoomOut').on('click', () => svg.transition().call(zoom.scaleBy, 0.7));
+    d3.select('#zoomReset').on('click', () => svg.transition().call(zoom.transform, d3.zoomIdentity));
+
+    let allNodes = [];
+    let allLinks = [];
+    let filteredNodes = [];
+    let filteredLinks = [];
+    let currentLayout = 'ring'; // Layout Ring sempre attivo
+
+    function getDeviceIcon(node) {
+      const sysname = (node.sysname || '').toLowerCase();
+      const label = (node.label || '').toLowerCase();
+      const devStatus = (node.status || '').toLowerCase();
+      const type = (node.type || '').toLowerCase();
+
+      if (sysname.includes('l3') || sysname.includes('core') || sysname.includes('6730')) {
+        return 'img/dev/s3mg.png';
+      }
+      if (type === 'router' || sysname.includes('router')) {
+        return 'img/dev/rtmg.png';
+      }
+      // Detection AP: stessi pattern usati nel filtro
+      if (sysname.includes('ap-') || sysname.includes('-ap') ||
+          sysname.includes('ap_') || sysname.includes('_ap') ||
+          sysname.includes('pdv') || sysname.includes('wifi') ||
+          sysname.includes('wireless') || sysname.includes('wlan') ||
+          sysname.startsWith('ap')) {
+        return 'img/dev/wamg.png';
+      }
+      if (devStatus === 'neighbor' || type === 'neighbor') {
+        return 'img/dev/smsu.png';
+      }
+      if (type === 'l2' || sysname.includes('l2') || label.includes('rack')) {
+        return 'img/dev/s2mg.png';
+      }
+      return 'img/dev/s2mg.png';
+    }
+
+    function getLinkColor(link) {
+      // Se è fornito uno stato esplicito, usa quello
+      if (link.status) {
+        switch (link.status.toLowerCase()) {
+          case 'up': return '#00ff00'; // Verde
+          case 'down': return '#ff0000'; // Rosso
+          case 'degraded': return '#ff8c00'; // Arancione
+          case 'unknown': return '#666666'; // Grigio
+          default: break;
+        }
+      }
+
+      // Altrimenti usa la velocità (default behavior)
+      const speed = link.speed || 0;
+      if (speed >= 10000) return '#800080'; // Viola
+      if (speed >= 1000) return '#cc0000'; // Rosso scuro
+      if (speed >= 100) return '#ff8c00'; // Arancione
+      if (speed >= 10) return '#0066cc'; // Blu
+      return '#666666'; // Grigio
+    }
+
+    function getLinkWidth(link) {
+      const speed = link.speed || 0;
+      if (speed >= 10000) return 4;
+      if (speed >= 1000) return 3;
+      if (speed >= 100) return 2;
+      return 1;
+    }
+
+
+    // ========== EXPORT FUNCTIONS (NeDi-style) ==========
+
+    function cloneSVGWithStyles(svgEl) {
+      const clonedSvg = svgEl.cloneNode(true);
+      const applyStyles = (sourceEl, targetEl) => {
+        const computedStyle = window.getComputedStyle(sourceEl);
+        const props = ['fill', 'stroke', 'stroke-width', 'stroke-opacity', 'fill-opacity',
+          'font-family', 'font-size', 'font-weight', 'text-anchor', 'opacity', 'filter', 'text-shadow'];
+        props.forEach(prop => {
+          const value = computedStyle.getPropertyValue(prop);
+          if (value && value !== 'none' && value !== 'normal') targetEl.style[prop] = value;
+        });
+        Array.from(sourceEl.children).forEach((child, i) => {
+          if (targetEl.children[i]) applyStyles(child, targetEl.children[i]);
+        });
+      };
+      applyStyles(svgEl, clonedSvg);
+      clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      clonedSvg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+      return clonedSvg;
+    }
+
+    function getSVGContentBBox(svgEl) {
+      try {
+        const bbox = svgEl.querySelector('g').getBBox();
+        return { x: bbox.x - 50, y: bbox.y - 50, width: bbox.width + 100, height: bbox.height + 100 };
+      } catch (e) {
+        return { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+      }
+    }
+
+    function exportSVG() {
+      const mode = document.querySelector('input[name="exportMode"]:checked').value;
+      const svg = document.getElementById('topology');
+      const cloned = cloneSVGWithStyles(svg);
+      
+      if (mode === 'full') {
+        const bbox = getSVGContentBBox(svg);
+        cloned.setAttribute('viewBox', `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`);
+        cloned.setAttribute('width', bbox.width);
+        cloned.setAttribute('height', bbox.height);
+      } else {
+        const t = container.attr('transform') || 'translate(0,0) scale(1)';
+        const g = cloned.querySelector('g');
+        if (g) g.setAttribute('transform', t);
+        cloned.setAttribute('width', window.innerWidth);
+        cloned.setAttribute('height', window.innerHeight);
+        cloned.setAttribute('viewBox', `0 0 ${window.innerWidth} ${window.innerHeight}`);
+      }
+      
+      let svgStr = new XMLSerializer().serializeToString(cloned);
+      svgStr = '<?xml version="1.0" encoding="UTF-8"?>\n' + svgStr;
+      const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `netmap_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.svg`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+      console.log('Export SVG:', link.download);
+    }
+
+    function exportPNG() {
+      const mode = document.querySelector('input[name="exportMode"]:checked').value;
+      const svg = document.getElementById('topology');
+      const cloned = cloneSVGWithStyles(svg);
+      
+      let w, h, vb;
+      if (mode === 'full') {
+        const bbox = getSVGContentBBox(svg);
+        w = bbox.width; h = bbox.height;
+        vb = `${bbox.x} ${bbox.y} ${bbox.width} ${bbox.height}`;
+      } else {
+        const t = container.attr('transform') || 'translate(0,0) scale(1)';
+        const g = cloned.querySelector('g');
+        if (g) g.setAttribute('transform', t);
+        w = window.innerWidth; h = window.innerHeight;
+        vb = `0 0 ${w} ${h}`;
+      }
+      
+      cloned.setAttribute('width', w);
+      cloned.setAttribute('height', h);
+      cloned.setAttribute('viewBox', vb);
+      
+      const svgStr = new XMLSerializer().serializeToString(cloned);
+      const blob = new Blob([svgStr], { type: 'image/svg+xml' });
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const scale = 2;
+        canvas.width = w * scale;
+        canvas.height = h * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, w, h);
+        
+        canvas.toBlob(b => {
+          const pngUrl = URL.createObjectURL(b);
+          const link = document.createElement('a');
+          link.download = `netmap_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.png`;
+          link.href = pngUrl;
+          link.click();
+          URL.revokeObjectURL(url);
+          URL.revokeObjectURL(pngUrl);
+          console.log('Export PNG:', link.download);
+        }, 'image/png');
+      };
+      
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        alert('Errore export PNG. Verifica caricamento immagini.');
+      };
+      img.src = url;
+    }
+
+    // ========== END EXPORT FUNCTIONS ==========
+
+    async function loadData() {
+      try {
+        const response = await fetch('/api/map-db?lev=4&mde=f');
+        const data = await response.json();
+
+        allNodes = data.nodes.map((n, i) => ({
+          ...n,
+          index: i,
+          icon: getDeviceIcon(n),
+          level: typeof n.level === 'number' ? n.level : 0
+        }));
+
+        const nodeById = new Map();
+        allNodes.forEach(n => {
+          nodeById.set(n.id, n);
+          if (n.ip) nodeById.set(n.ip, n);
+          if (n.label) nodeById.set(n.label, n);
+          if (n.sysname) nodeById.set(n.sysname, n);
+        });
+
+        // Deduplicazione link bidirezionali LLDP
+        // A→B e B→A sono lo stesso link fisico
+        allLinks = [];
+        const seenLinks = new Set();
+
+        for (const l of data.links) {
+          const sourceNode = nodeById.get(l.source) || nodeById.get(l.from);
+          const targetNode = nodeById.get(l.target) || nodeById.get(l.to);
+          const di = l.di || l.localIf || '';
+          const ni = l.ni || l.remoteIf || '';
+
+          if (sourceNode && targetNode && sourceNode !== targetNode) {
+            // Chiave normalizzata: ordina gli ID per evitare duplicati A-B e B-A
+            const ids = [sourceNode.id, targetNode.id].sort();
+            const linkKey = `${ids[0]}||${ids[1]}`;
+
+            if (!seenLinks.has(linkKey)) {
+              seenLinks.add(linkKey);
+              allLinks.push({
+                source: sourceNode,
+                target: targetNode,
+                di,
+                ni,
+                protocol: l.protocol || '',
+                speed: l.speed || 0
+              });
+            }
+          }
+        }
+
+        console.log(`[Links] Totale raw: ${data.links.length}, Deduplicati: ${allLinks.length}`);
+
+        // Estrai codici sito unici dai nomi device (es. "03_L2_..." -> "03")
+        populateSiteFilter();
+
+        filterAndRender();
+      } catch (err) {
+        console.error('Errore caricamento dati:', err);
+      }
+    }
+
+    // Estrae il codice sito dal nome device
+    // Supporta vari pattern di naming
+    function extractSiteCode(name) {
+      if (!name) return null;
+
+      // Pattern 1: XX_ dove XX sono 2 cifre all'inizio (switch/device standard)
+      // Es: "03_L2_..." -> "03"
+      const matchStandard = name.match(/^(\d{2})_/);
+      if (matchStandard) return matchStandard[1];
+
+      // Pattern 2: PDV0XX o PDVXXX per Access Point
+      // Es: "PDV010-BU-AP001" -> "10", "PDV003..." -> "03"
+      const matchPDV = name.match(/^PDV(\d{3})/i);
+      if (matchPDV) {
+        const siteNum = parseInt(matchPDV[1], 10);
+        return siteNum.toString().padStart(2, '0');
+      }
+
+      // Pattern 3: AP_XX_ dove XX sono 2 cifre subito dopo AP_
+      // Es: "AP_01_ECOPOWER..." -> "01", "AP_05_..." -> "05"
+      const matchAPDirect = name.match(/^AP_(\d{2})_/i);
+      if (matchAPDirect) return matchAPDirect[1];
+
+      // Pattern 4: AP_..._XX_ dove XX sono 2 cifre dopo un prefisso
+      // Es: "AP_BU_34_..." -> "34", "AP_PT_05_..." -> "05", "AP_Casa_Milan_01_..." -> "01"
+      const matchAPMid = name.match(/^AP_[A-Za-z_]+_(\d{2})_/i);
+      if (matchAPMid) return matchAPMid[1];
+
+      return null;
+    }
+
+    // Legge parametro site dall'URL (se passato da discovery.html)
+    function getSiteFromURL() {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get('site');
+    }
+
+    // Popola il dropdown siti con i codici estratti dai device
+    function populateSiteFilter() {
+      const siteSelect = document.getElementById('siteFilter');
+      const sites = new Set();
+
+      allNodes.forEach(n => {
+        const sysname = n.sysname || n.label || '';
+        const siteCode = extractSiteCode(sysname);
+        if (siteCode) sites.add(siteCode);
+      });
+
+      // Ordina i codici sito numericamente
+      const sortedSites = Array.from(sites).sort((a, b) => parseInt(a) - parseInt(b));
+
+      // Controlla se c'è un sito specificato nell'URL
+      const urlSite = getSiteFromURL();
+
+      // Preserva la selezione corrente o usa il sito dall'URL
+      const currentValue = urlSite || siteSelect.value;
+
+      // Svuota e ripopola (senza opzione "Tutti i siti")
+      siteSelect.innerHTML = '';
+      sortedSites.forEach(site => {
+        const option = document.createElement('option');
+        option.value = site;
+        option.textContent = `Sito ${site}`;
+        siteSelect.appendChild(option);
+      });
+
+      // Seleziona il sito dall'URL se valido, altrimenti preserva o seleziona il primo
+      if (currentValue && sortedSites.includes(currentValue)) {
+        siteSelect.value = currentValue;
+        if (urlSite) {
+          console.log(`[URL] Sito preselezionato da URL: ${urlSite}`);
+        }
+      } else if (sortedSites.length > 0) {
+        siteSelect.value = sortedSites[0];
+      }
+
+      console.log(`[Siti] Trovati ${sortedSites.length} siti: ${sortedSites.join(', ')}`);
+    }
+
+    function filterAndRender() {
+      const search = document.getElementById('search').value.toLowerCase();
+      const siteFilter = document.getElementById('siteFilter').value;
+      const showL3 = document.getElementById('showL3').checked;
+      const showL2 = document.getElementById('showL2').checked;
+      const showRouter = document.getElementById('showRouter').checked;
+      const showNeighbor = document.getElementById('showNeighbor').checked;
+      const showAP = document.getElementById('showAP').checked;
+      const showUnknown = document.getElementById('showUnknown').checked;
+
+      filteredNodes = allNodes.filter(n => {
+        const type = (n.type || '').toLowerCase();
+        const label = (n.label || n.sysname || '').toLowerCase();
+        const ip = n.ip || n.id || '';
+        const sysname = (n.sysname || '').toLowerCase();
+        const status = (n.status || '').toLowerCase();
+
+        // FILTRO SITO: se selezionato, mostra solo device che iniziano con "XX_"
+        if (siteFilter) {
+          const sysnameOriginal = n.sysname || n.label || '';
+          const deviceSite = extractSiteCode(sysnameOriginal);
+          if (deviceSite !== siteFilter) return false;
+        }
+
+        const isMacAddress = /^[0-9a-f]{2}(:[0-9a-f]{2}){5}$/i.test(label);
+        if (isMacAddress) return false;
+
+        // Detection AP migliorata per catturare più pattern:
+        // - ap- o -ap (trattino)
+        // - ap_ o _ap (underscore)
+        // - pdv (Access Point PDV010-...)
+        // - wifi, wireless, wlan
+        // - nomi che iniziano con ap (es. AP_BU_34_...)
+        const isAp = sysname.includes('ap-') ||
+                     sysname.includes('-ap') ||
+                     sysname.includes('ap_') ||
+                     sysname.includes('_ap') ||
+                     sysname.includes('pdv') ||
+                     sysname.includes('wifi') ||
+                     sysname.includes('wireless') ||
+                     sysname.includes('wlan') ||
+                     sysname.startsWith('ap');
+
+        const isSwitch =
+          sysname.includes('l2_') ||
+          sysname.includes('l2-') ||
+          sysname.includes('l3_') ||
+          sysname.includes('l3-') ||
+          sysname.includes('core') ||
+          sysname.includes('rack') ||
+          sysname.includes('switch');
+
+        const isRouter =
+          type === 'router' ||
+          sysname.includes('router') ||
+          label.includes('router');
+
+        const isInfra = isSwitch || isRouter || isAp;
+        if (!isInfra) return false;
+
+        if (isSwitch && !showL2 && !showL3) return false;
+        if (isRouter && !showRouter) return false;
+        if (isAp && !showAP) return false;
+
+        if (!isAp && (type === 'neighbor' || status === 'neighbor') && !showNeighbor) return false;
+        if (type === 'unknown' && !showUnknown) return false;
+
+        if (search && !label.includes(search) && !ip.includes(search)) return false;
+
+        return true;
+      });
+
+      const nodeIds = new Set(filteredNodes.map(n => n.id));
+
+      filteredLinks = allLinks.filter(l =>
+        nodeIds.has(l.source.id) && nodeIds.has(l.target.id)
+      );
+
+      document.getElementById('nodeCount').textContent = `Nodi: ${filteredNodes.length}`;
+      document.getElementById('linkCount').textContent = `Link: ${filteredLinks.length}`;
+
+      render();
+    }
+
+    // Layout Ring: albero radiale con rami proporzionali ai discendenti
+    function layoutRing() {
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Identifica root switch (251)
+      let rootNode = filteredNodes.find(n =>
+        (n.ip && n.ip.endsWith('.251')) ||
+        ((n.sysname || '').toLowerCase().includes('s6730')) ||
+        ((n.sysname || '').toLowerCase().includes('core'))
+      );
+
+      // Costruisci grafo di adiacenza dai link
+      const adjacency = new Map();
+      filteredNodes.forEach(n => adjacency.set(n.id, []));
+
+      filteredLinks.forEach(link => {
+        const fromId = link.from || link.source?.id || link.source;
+        const toId = link.to || link.target?.id || link.target;
+        if (adjacency.has(fromId) && adjacency.has(toId)) {
+          adjacency.get(fromId).push(toId);
+          adjacency.get(toId).push(fromId);
+        }
+      });
+
+      // Fallback: se root non trovato, usa il nodo con più connessioni
+      if (!rootNode && filteredNodes.length > 0) {
+        let maxConnections = -1;
+        filteredNodes.forEach(n => {
+          const connections = (adjacency.get(n.id) || []).length;
+          if (connections > maxConnections) {
+            maxConnections = connections;
+            rootNode = n;
+          }
+        });
+        console.log(`[Ring] Root non trovato, usando ${rootNode?.sysname || rootNode?.id} con ${maxConnections} connessioni`);
+      }
+
+      if (!rootNode) {
+        console.warn('[Ring] Nessun nodo disponibile');
+        return;
+      }
+
+      // BFS per costruire albero
+      const parentNode = new Map();
+      const childrenMap = new Map();
+      const visited = new Set([rootNode.id]);
+      const queue = [rootNode.id];
+
+      while (queue.length > 0) {
+        const currentId = queue.shift();
+        const neighbors = adjacency.get(currentId) || [];
+        const children = [];
+
+        for (const neighborId of neighbors) {
+          if (!visited.has(neighborId)) {
+            visited.add(neighborId);
+            parentNode.set(neighborId, currentId);
+            children.push(neighborId);
+            queue.push(neighborId);
+          }
+        }
+        childrenMap.set(currentId, children);
+      }
+
+      // Salva per drag
+      const nodeMap = new Map(filteredNodes.map(n => [n.id, n]));
+      window._topologyChildrenMap = childrenMap;
+
+      filteredNodes.forEach(n => {
+        n.parentId = parentNode.get(n.id);
+      });
+
+      // Conta discendenti per ogni nodo (per calcolare peso settore)
+      const descendantCount = new Map();
+      const countDescendants = (nodeId) => {
+        const children = childrenMap.get(nodeId) || [];
+        let count = 1; // conta se stesso
+        for (const childId of children) {
+          count += countDescendants(childId);
+        }
+        descendantCount.set(nodeId, count);
+        return count;
+      };
+      countDescendants(rootNode.id);
+
+      // Identifica AP e nodi irraggiungibili
+      const isAP = (n) => {
+        const sysname = (n.sysname || '').toUpperCase();
+        return sysname.includes('-AP') || sysname.includes('_AP') ||
+               sysname.startsWith('AP') || n.type === 'ap' ||
+               (sysname.includes('PDV') && sysname.includes('AP'));
+      };
+
+      const apNodes = filteredNodes.filter(n => isAP(n));
+      const unreachableNodes = filteredNodes.filter(n => !visited.has(n.id));
+
+      // Log struttura albero per debug
+      const rootChildren = childrenMap.get(rootNode.id) || [];
+      console.log(`[Ring] Root: ${rootNode.sysname}, Visitati: ${visited.size}, AP: ${apNodes.length}, Irraggiungibili: ${unreachableNodes.length}`);
+      console.log(`[Ring] Figli diretti del root (${rootChildren.length}):`, rootChildren.map(id => nodeMap.get(id)?.sysname || id));
+
+      // Parametri layout - raggi MOLTO ampi per massima separazione
+      const baseRadius = 350;
+      const radiusIncrement = 320;
+      const minAnglePerNode = 0.25; // Angolo minimo per nodo (~14 gradi)
+      const sectorPadding = 0.08; // Padding tra settori (~4.5 gradi)
+
+      // Posiziona root al centro
+      rootNode.x = centerX;
+      rootNode.y = centerY;
+
+      // Struttura per settori angolari: ogni nodo ha startAngle, endAngle
+      const nodeSectors = new Map();
+      nodeSectors.set(rootNode.id, { startAngle: 0, endAngle: 2 * Math.PI });
+
+      // Funzione ricorsiva per posizionare nodi
+      const positionNode = (nodeId, depth) => {
+        const node = nodeMap.get(nodeId);
+        if (!node) return;
+
+        const sector = nodeSectors.get(nodeId);
+        if (!sector) return;
+
+        // Calcola angolo centrale del nodo
+        const midAngle = (sector.startAngle + sector.endAngle) / 2;
+
+        // Posiziona il nodo
+        if (nodeId !== rootNode.id) {
+          const radius = baseRadius + (depth - 1) * radiusIncrement;
+          node.x = centerX + radius * Math.cos(midAngle - Math.PI / 2);
+          node.y = centerY + radius * Math.sin(midAngle - Math.PI / 2);
+        }
+
+        // Ottieni figli (escludi AP che verranno posizionati separatamente)
+        const children = (childrenMap.get(nodeId) || []).filter(childId => {
+          const childNode = nodeMap.get(childId);
+          return childNode && !isAP(childNode);
+        });
+        if (children.length === 0) return;
+
+        // Calcola spazio disponibile con padding
+        let currentAngle = sector.startAngle + sectorPadding;
+        const sectorSpan = (sector.endAngle - sector.startAngle) - (sectorPadding * 2);
+
+        // Calcola angolo minimo richiesto per tutti i figli
+        const minRequiredAngle = children.length * minAnglePerNode;
+
+        // Se lo spazio è insufficiente, usa comunque lo spazio disponibile
+        const effectiveMinAngle = Math.min(minAnglePerNode, sectorSpan / children.length);
+
+        // Calcola pesi basati su discendenti E collegamenti diretti
+        const weights = children.map(childId => {
+          const desc = descendantCount.get(childId) || 1;
+          // Conta anche link diretti del nodo (più link = più spazio)
+          const childNode = nodeMap.get(childId);
+          const directLinks = filteredLinks.filter(l =>
+            l.source_id === childId || l.target_id === childId ||
+            l.source?.id === childId || l.target?.id === childId
+          ).length;
+          // Peso = discendenti + link diretti (amplificato)
+          return Math.max(1, desc + directLinks * 1.5);
+        });
+        const totalWeight = weights.reduce((a, b) => a + b, 0);
+
+        // Distribuzione ibrida: minimo garantito + proporzionale per eccedenza
+        const baseAngle = effectiveMinAngle;
+        const extraAngle = Math.max(0, sectorSpan - (children.length * baseAngle));
+
+        children.forEach((childId, index) => {
+          // Angolo base + quota proporzionale dell'extra (amplificato per nodi con molti link)
+          const proportionalExtra = (extraAngle * weights[index]) / totalWeight;
+          const childAngle = baseAngle + proportionalExtra * 1.2; // boost 20%
+
+          nodeSectors.set(childId, {
+            startAngle: currentAngle,
+            endAngle: currentAngle + childAngle
+          });
+
+          currentAngle += childAngle;
+          positionNode(childId, depth + 1);
+        });
+      };
+
+      // Avvia posizionamento dal root
+      positionNode(rootNode.id, 0);
+
+      // Trova la profondità massima
+      let maxDepth = 0;
+      filteredNodes.forEach(n => {
+        if (n.x !== undefined && n.y !== undefined && n.id !== rootNode.id) {
+          let depth = 0;
+          let current = n.id;
+          while (parentNode.has(current)) {
+            depth++;
+            current = parentNode.get(current);
+          }
+          if (depth > maxDepth) maxDepth = depth;
+        }
+      });
+
+      // Posiziona AP nell'anello esterno, raggruppati per parent
+      const apRadius = baseRadius + maxDepth * radiusIncrement + 200;
+      const apByParent = new Map();
+      apNodes.forEach(ap => {
+        const parent = parentNode.get(ap.id) || 'unknown';
+        if (!apByParent.has(parent)) apByParent.set(parent, []);
+        apByParent.get(parent).push(ap);
+      });
+
+      apByParent.forEach((aps, parentId) => {
+        const parentSector = nodeSectors.get(parentId);
+        if (parentSector) {
+          const angleSpan = (parentSector.endAngle - parentSector.startAngle) / (aps.length + 1);
+          aps.forEach((ap, i) => {
+            const angle = parentSector.startAngle + angleSpan * (i + 1);
+            ap.x = centerX + apRadius * Math.cos(angle - Math.PI / 2);
+            ap.y = centerY + apRadius * Math.sin(angle - Math.PI / 2);
+          });
+        } else {
+          // AP senza parent valido, posiziona in cerchio
+          const anglePerAP = (2 * Math.PI) / apNodes.length;
+          const baseIndex = apNodes.indexOf(aps[0]);
+          aps.forEach((ap, i) => {
+            const angle = anglePerAP * (baseIndex + i);
+            ap.x = centerX + apRadius * Math.cos(angle - Math.PI / 2);
+            ap.y = centerY + apRadius * Math.sin(angle - Math.PI / 2);
+          });
+        }
+      });
+
+      // Nodi irraggiungibili in cerchio esterno
+      if (unreachableNodes.length > 0) {
+        const unreachableRadius = apRadius + 150;
+        unreachableNodes.forEach((n, i) => {
+          const angle = (i / unreachableNodes.length) * 2 * Math.PI;
+          n.x = centerX + unreachableRadius * Math.cos(angle - Math.PI / 2);
+          n.y = centerY + unreachableRadius * Math.sin(angle - Math.PI / 2);
+        });
+      }
+
+      // Salva posizioni originali per drag ring-aware
+      filteredNodes.forEach(n => {
+        n._origX = n.x;
+        n._origY = n.y;
+      });
+
+      // Memorizza parentNode per drag
+      window._topologyParentNode = parentNode;
+    }
+
+    // Funzione per calcolare offset curva (spostata a livello globale per applyLayout)
+    const calculateLinkOffset = (d) => {
+      if (d.totalLinks === 1) return 0;
+      const maxOffset = 40;
+      const spacing = maxOffset / (d.totalLinks - 1);
+      const centerIndex = (d.totalLinks - 1) / 2;
+      return (d.linkIndex - centerIndex) * spacing;
+    };
+
+    // Genera path con curva per link paralleli (spostata a livello globale per applyLayout)
+    const linkArc = (d) => {
+      const offset = calculateLinkOffset(d);
+      if (Math.abs(offset) < 0.1) {
+        return `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`;
+      }
+      const dx = d.target.x - d.source.x;
+      const dy = d.target.y - d.source.y;
+      const dr = Math.sqrt(dx * dx + dy * dy);
+      if (dr === 0) return `M${d.source.x},${d.source.y}`;
+      const midX = (d.source.x + d.target.x) / 2;
+      const midY = (d.source.y + d.target.y) / 2;
+      const perpX = -dy / dr;
+      const perpY = dx / dr;
+      const ctrlX = midX + perpX * offset;
+      const ctrlY = midY + perpY * offset;
+      return `M${d.source.x},${d.source.y} Q${ctrlX},${ctrlY} ${d.target.x},${d.target.y}`;
+    };
+
+    // Applica layout Ring (unico layout disponibile)
+    function applyLayout(layoutType) {
+      currentLayout = 'ring';
+
+      // Calcola nuove posizioni - solo Ring layout
+      layoutRing();
+
+      // Anima nodi alle nuove posizioni
+      container.selectAll('.node')
+        .transition()
+        .duration(800)
+        .attr('transform', d => `translate(${d.x},${d.y})`);
+
+      // Anima link
+      container.selectAll('.link')
+        .transition()
+        .duration(800)
+        .attr('d', linkArc);
+
+      container.selectAll('.lnk')
+        .transition()
+        .duration(800)
+        .attr('d', linkArc);
+
+      // Salva preferenza
+      localStorage.setItem('netmapLayoutMode', layoutType);
+    }
+
+    function render() {
+      container.selectAll('*').remove();
+
+      const labelMode = document.getElementById('labelMode').value;
+
+      // SVG defs per gradients bidirezionali (stile NeDi)
+      const defs = container.append('defs');
+
+      // Crea gradients per combinazioni di colori bidirezionali
+      const colors = ['#666666', '#0066cc', '#ff8c00', '#cc0000', '#800080', '#00ff00', '#ff0000'];
+      let gradientId = 0;
+
+      const createBidirGradient = (color1, color2) => {
+        const id = `bidir-gradient-${gradientId++}`;
+        const gradient = defs.append('linearGradient')
+          .attr('id', id)
+          .attr('x1', '0%')
+          .attr('y1', '0%')
+          .attr('x2', '100%')
+          .attr('y2', '0%');
+
+        gradient.append('stop')
+          .attr('offset', '0%')
+          .attr('stop-color', color1);
+
+        gradient.append('stop')
+          .attr('offset', '50%')
+          .attr('stop-color', color1);
+
+        gradient.append('stop')
+          .attr('offset', '50%')
+          .attr('stop-color', color2);
+
+        gradient.append('stop')
+          .attr('offset', '100%')
+          .attr('stop-color', color2);
+
+        return id;
+      };
+
+      // Pre-crea gradients per combinazioni comuni
+      const gradientCache = new Map();
+      colors.forEach(c1 => {
+        colors.forEach(c2 => {
+          if (c1 !== c2) {
+            const key = `${c1}-${c2}`;
+            gradientCache.set(key, createBidirGradient(c1, c2));
+          }
+        });
+      });
+
+      // Applica layout Ring (unico disponibile)
+      layoutRing();
+
+      // Identifica link paralleli e assegna indici (stile NeDi)
+      const linkGroups = new Map();
+      filteredLinks.forEach(link => {
+        const key1 = `${link.source.id}-${link.target.id}`;
+        const key2 = `${link.target.id}-${link.source.id}`;
+
+        if (linkGroups.has(key1)) {
+          linkGroups.get(key1).push(link);
+        } else if (linkGroups.has(key2)) {
+          linkGroups.get(key2).push(link);
+        } else {
+          linkGroups.set(key1, [link]);
+        }
+      });
+
+      // Assegna indici per offset
+      linkGroups.forEach(group => {
+        group.forEach((link, idx) => {
+          link.linkIndex = idx;
+          link.totalLinks = group.length;
+        });
+      });
+
+      // Funzione per determinare stroke (colore o gradient)
+      const getLinkStroke = (d) => {
+        // Se il backend fornisce forward_status e reverse_status diversi
+        if (d.forward_status && d.reverse_status && d.forward_status !== d.reverse_status) {
+          const forwardColor = getLinkColor({ status: d.forward_status, speed: d.speed });
+          const reverseColor = getLinkColor({ status: d.reverse_status, speed: d.speed });
+
+          const key = `${forwardColor}-${reverseColor}`;
+          if (gradientCache.has(key)) {
+            return `url(#${gradientCache.get(key)})`;
+          }
+
+          // Fallback: crea gradient on-the-fly
+          const newGradientId = createBidirGradient(forwardColor, reverseColor);
+          gradientCache.set(key, newGradientId);
+          return `url(#${newGradientId})`;
+        }
+
+        // Colore singolo (default)
+        return getLinkColor(d);
+      };
+
+      const links = container.append('g')
+        .attr('class', 'links')
+        .selectAll('path')
+        .data(filteredLinks)
+        .enter()
+        .append('path')
+        .attr('class', 'link')
+        .attr('stroke', d => getLinkStroke(d))
+        .attr('stroke-width', d => getLinkWidth(d))
+        .attr('fill', 'none')
+        .attr('d', linkArc)
+        .style('pointer-events', 'stroke')
+        .on('mouseenter', (event, d) => window.TooltipSystem?.showLinkTooltip(event, d))
+        .on('mousemove', (event, d) => window.TooltipSystem?.showLinkTooltip(event, d))
+        .on('mouseleave', () => window.TooltipSystem?.hideTooltip());
+
+      const ifipos = 25;
+
+      const shortIfName = (name) => {
+        if (!name || typeof name !== 'string') return '';
+        const trimmed = name.trim();
+        const lower = trimmed.toLowerCase();
+
+        // Filtra MAC addresses formato standard (aa:bb:cc:dd:ee:ff)
+        if (/^([0-9a-f]{2}:){5}[0-9a-f]{2}$/i.test(trimmed)) return '';
+
+        // Filtra MAC addresses formato Huawei (xxxx-xxxx-xxxx)
+        if (/^[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}$/i.test(trimmed)) return '';
+
+        // Filtra valori puramente numerici (es. "1", "15")
+        if (/^\d+$/.test(trimmed)) return '';
+
+        // Filtra console e loopback
+        if (lower.includes('console') || lower.includes('con0') || lower === 'con') return '';
+        if (lower.includes('loopback') || /^lo\d*$/i.test(trimmed)) return '';
+
+        // Filtra nomi troppo lunghi (probabilmente descrizioni)
+        if (trimmed.length > 25) return '';
+
+        // Filtra valori nulli o placeholder
+        if (lower === 'null' || lower === '-' || lower === 'n/a' || lower === 'unknown') return '';
+
+        // Filtra hostname (contiene underscore tipico dei device ma non è interfaccia)
+        // es. "10_L2_RackA_3" ma non "Gi0/0/1" o "mgt0"
+        if (trimmed.includes('_') && !trimmed.includes('/')) return '';
+
+        // Abbrevia nomi standard Huawei/Cisco
+        return trimmed
+          .replace(/^GigabitEthernet/i, 'Gi')
+          .replace(/^FastEthernet/i, 'Fa')
+          .replace(/^TenGigabitEthernet/i, 'Te')
+          .replace(/^TwentyFiveGigE/i, '25Gi')
+          .replace(/^FortyGigabitEthernet/i, '40Gi')
+          .replace(/^HundredGigE/i, '100Gi')
+          .replace(/^Ethernet/i, 'Et')
+          .replace(/^XGigabitEthernet/i, 'XGi')
+          .replace(/^GE/i, 'Gi')  // Huawei GE -> Gi
+          .replace(/^XGE/i, 'XGi') // Huawei XGE -> XGi
+          .replace(/^MEth/i, 'MEth')
+          .replace(/^Vlanif/i, 'Vlan');
+      };
+
+      const lnk = container.append('g')
+        .selectAll('path')
+        .data(filteredLinks)
+        .enter()
+        .append('path')
+        .attr('class', 'lnk')
+        .attr('id', (d, i) => `lnk${i}`)
+        .style('fill', 'none')
+        .style('pointer-events', 'none')
+        .attr('d', linkArc);
+
+      const lnksta = container.append('g')
+        .selectAll('text')
+        .data(filteredLinks)
+        .enter()
+        .append('text')
+        .attr('class', 'link-label')
+        .attr('text-anchor', 'start');
+
+      lnksta.append('textPath')
+        .attr('xlink:href', (d, i) => `#lnk${i}`)
+        .style('pointer-events', 'none')
+        .attr('startOffset', `${ifipos}%`)
+        .text(d => shortIfName(d.di));
+
+      const lnkend = container.append('g')
+        .selectAll('text')
+        .data(filteredLinks)
+        .enter()
+        .append('text')
+        .attr('class', 'link-label')
+        .attr('text-anchor', 'end');
+
+      lnkend.append('textPath')
+        .attr('xlink:href', (d, i) => `#lnk${i}`)
+        .style('pointer-events', 'none')
+        .attr('startOffset', `${100 - ifipos}%`)
+        .text(d => shortIfName(d.ni));
+
+      // Funzione per trovare tutti i discendenti di un nodo ricorsivamente
+      const getDescendants = (nodeId, visited = new Set()) => {
+        if (visited.has(nodeId)) return [];
+        visited.add(nodeId);
+
+        const children = window._topologyChildrenMap?.get(nodeId) || [];
+        let descendants = [...children];
+
+        children.forEach(childId => {
+          descendants = descendants.concat(getDescendants(childId, visited));
+        });
+
+        return descendants;
+      };
+
+      // Mappa nodi per ID per accesso rapido
+      const nodesById = new Map(filteredNodes.map(n => [n.id, n]));
+
+      // Funzione ricorsiva per riposizionare figli mantenendo struttura ring
+      const repositionChildren = (parentId, parentNewX, parentNewY, parentOldX, parentOldY) => {
+        const children = window._topologyChildrenMap?.get(parentId) || [];
+        children.forEach(childId => {
+          const childNode = nodesById.get(childId);
+          if (childNode && childNode._origX !== undefined) {
+            // Calcola vettore relativo originale (padre->figlio)
+            const relX = childNode._origX - (nodesById.get(parentId)?._origX || parentOldX);
+            const relY = childNode._origY - (nodesById.get(parentId)?._origY || parentOldY);
+
+            // Applica vettore relativo alla nuova posizione del padre
+            childNode.x = parentNewX + relX;
+            childNode.y = parentNewY + relY;
+
+            // Ricorsione per figli dei figli
+            repositionChildren(childId, childNode.x, childNode.y, childNode._origX, childNode._origY);
+          }
+        });
+      };
+
+      // Funzione drag per spostare i nodi con i figli (ring-aware)
+      const drag = d3.drag()
+        .on('start', function(event, d) {
+          // Non fare raise() qui - causa flicker visivo
+          // Lo faremo nel drag handler solo se c'è movimento reale
+          d._dragStartX = d.x;
+          d._dragStartY = d.y;
+          d._isDragging = false; // Flag per tracciare se è un vero drag
+        })
+        .on('drag', function(event, d) {
+          // Attiva dragging solo al primo movimento reale
+          if (!d._isDragging) {
+            d._isDragging = true;
+            d3.select(this).raise().classed('dragging', true);
+          }
+          // Aggiorna posizione del nodo principale
+          d.x = event.x;
+          d.y = event.y;
+          d3.select(this).attr('transform', `translate(${d.x},${d.y})`);
+
+          // Riposiziona tutti i discendenti mantenendo struttura ring
+          repositionChildren(d.id, d.x, d.y, d._dragStartX, d._dragStartY);
+
+          // Aggiorna posizione visuale di tutti i nodi
+          container.selectAll('.node')
+            .attr('transform', n => `translate(${n.x},${n.y})`);
+
+          // Aggiorna tutti i link
+          container.selectAll('.link').attr('d', linkArc);
+          container.selectAll('.link-label-path').attr('d', linkArc);
+          container.selectAll('.lnk').attr('d', linkArc);
+
+          d._dragStartX = d.x;
+          d._dragStartY = d.y;
+        })
+        .on('end', function(event, d) {
+          // Rimuovi classe dragging solo se era un vero drag
+          if (d._isDragging) {
+            d3.select(this).classed('dragging', false);
+          }
+
+          // Se non c'è stato drag (click semplice), apri il device panel
+          if (!d._isDragging) {
+            const deviceName = d.sysname || d.label || d.id;
+            if (deviceName && typeof window.openDevicePanel === 'function') {
+              window.openDevicePanel(deviceName);
+            }
+          }
+
+          // Pulizia flags
+          delete d._dragStartX;
+          delete d._dragStartY;
+          delete d._isDragging;
+        });
+
+      const nodes = container.append('g')
+        .attr('class', 'nodes')
+        .selectAll('g')
+        .data(filteredNodes)
+        .enter()
+        .append('g')
+        .attr('class', 'node')
+        .attr('transform', d => `translate(${d.x},${d.y})`)
+        .call(drag)
+        /* Click handler rimosso - gestito in drag.end per evitare conflitto drag/click */
+        .on('mouseenter', (event, d) => window.TooltipSystem?.showNodeTooltip(event, d))
+        .on('mousemove', (event) => {
+          const tooltip = document.getElementById('tooltip');
+          if (tooltip && tooltip.style.opacity !== '0') {
+            tooltip.style.left = (event.pageX + 15) + 'px';
+            tooltip.style.top = (event.pageY + 15) + 'px';
+          }
+        })
+        .on('mouseleave', () => window.TooltipSystem?.hideTooltip());
+
+      nodes.append('image')
+        .attr('xlink:href', d => d.icon)
+        .attr('x', -16)
+        .attr('y', -16)
+        .attr('width', 32)
+        .attr('height', 32);
+
+      nodes.append('text')
+        .attr('class', d => {
+          const sysname = (d.sysname || '').toLowerCase();
+          const isAp = sysname.includes('ap-') || sysname.includes('-ap') ||
+                       sysname.includes('ap_') || sysname.includes('_ap') ||
+                       sysname.includes('pdv') || sysname.includes('wifi') ||
+                       sysname.includes('wireless') || sysname.includes('wlan') ||
+                       sysname.startsWith('ap');
+          return isAp ? 'node-label ap-label' : 'node-label';
+        })
+        .attr('dy', 28)
+        .text(d => {
+          const name = d.sysname || d.label || '';
+          const ip = d.ip || '';
+          if (labelMode === 'ip') return ip;
+          if (labelMode === 'both') return name ? `${name} ${ip}` : ip;
+          if (labelMode === 'none') return '';
+          return name;
+        });
+    }
+
+    document.getElementById('siteFilter').addEventListener('change', filterAndRender);
+    document.getElementById('search').addEventListener('input', filterAndRender);
+    document.getElementById('showL3').addEventListener('change', filterAndRender);
+    document.getElementById('showL2').addEventListener('change', filterAndRender);
+    document.getElementById('showRouter').addEventListener('change', filterAndRender);
+    document.getElementById('showNeighbor').addEventListener('change', filterAndRender);
+    document.getElementById('showAP').addEventListener('change', filterAndRender);
+    document.getElementById('showUnknown').addEventListener('change', filterAndRender);
+    document.getElementById('labelMode').addEventListener('change', filterAndRender);
+
+    // Toggle visibilità interfacce sui link
+    document.getElementById('showInterfaces').addEventListener('change', function() {
+      const svg = document.getElementById('topology');
+      if (this.checked) {
+        svg.classList.add('show-interfaces');
+      } else {
+        svg.classList.remove('show-interfaces');
+      }
+    });
+
+    document.getElementById('exportSVG').addEventListener('click', exportSVG);
+    document.getElementById('exportPNG').addEventListener('click', exportPNG);
+
+    loadData();
+  </script>
+  <script src="tooltip-addon.js"></script>
+
+  <!-- Device Details Side Panel -->
+  <div id="devicePanel" class="device-panel">
+    <div class="panel-header">
+      <h3 id="panelTitle">Device Details</h3>
+      <button class="panel-close" onclick="closeDevicePanel()">×</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="ports">Ports</button>
+      <button class="tab" data-tab="neighbors">Neighbors</button>
+    </div>
+    <div class="panel-content">
+      <div id="tabOverview" class="tab-content active"></div>
+      <div id="tabPorts" class="tab-content"></div>
+      <div id="tabNeighbors" class="tab-content"></div>
+    </div>
+    <div class="panel-footer">
+      <button onclick="refreshDevicePanel()">🔄 Refresh</button>
+      <span id="panelTimestamp"></span>
+    </div>
+  </div>
+
+  <script src="device-panel.js"></script>
+</body>
+</html>
+
+

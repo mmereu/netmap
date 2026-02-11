@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Topology - NeDi Style</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f5f5f5;
+      overflow: hidden;
+    }
+    #map-container {
+      width: 100vw;
+      height: 100vh;
+      background: #fff;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+    }
+    .link {
+      stroke-opacity: 0.8;
+      fill: none;
+    }
+    .link-label {
+      font-size: 8px;
+      fill: #333;
+      font-weight: 500;
+      pointer-events: none;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.9), 
+                   -1px -1px 2px rgba(255,255,255,0.9),
+                   1px -1px 2px rgba(255,255,255,0.9),
+                   -1px 1px 2px rgba(255,255,255,0.9);
+    }
+    .node-label {
+      font-size: 10px;
+      font-weight: bold;
+      fill: #333;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    .node-ip {
+      font-size: 8px;
+      fill: #888;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    .node {
+      cursor: pointer;
+    }
+    .node:hover {
+      filter: brightness(1.2);
+    }
+    
+    /* Control Panel */
+    #controls {
+      position: fixed;
+      top: 10px;
+      left: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000;
+      max-width: 280px;
+    }
+    #controls h3 {
+      margin-bottom: 10px;
+      color: #333;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    #controls label {
+      display: block;
+      margin: 5px 0;
+      font-size: 12px;
+      color: #555;
+    }
+    #controls input[type="text"] {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+    #controls .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    #controls .checkbox-group label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    #stats {
+      background: #f0f0f0;
+      padding: 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-top: 10px;
+    }
+    #stats span {
+      display: inline-block;
+      margin-right: 15px;
+      font-weight: bold;
+    }
+    
+    /* Legend */
+    #legend {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(255,255,255,0.95);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 11px;
+      z-index: 1000;
+    }
+    #legend h4 {
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+    }
+    
+    /* Zoom controls */
+    #zoom-controls {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      z-index: 1000;
+    }
+    #zoom-controls button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #ccc;
+      background: #fff;
+      border-radius: 4px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+    #zoom-controls button:hover {
+      background: #f0f0f0;
+    }
+    
+    /* Tooltip */
+    .tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      pointer-events: none;
+      z-index: 2000;
+      max-width: 300px;
+    }
+    .tooltip h4 {
+      margin-bottom: 6px;
+      color: #4fc3f7;
+    }
+    .tooltip p {
+      margin: 3px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="map-container">
+    <svg id="topology"></svg>
+  </div>
+  
+  <div id="controls">
+    <h3>🗺️ Network Topology</h3>
+    <label>Cerca:
+      <input type="text" id="search" placeholder="Nome, IP...">
+    </label>
+    <div class="checkbox-group">
+      <label><input type="checkbox" id="showL3" checked> L3</label>
+      <label><input type="checkbox" id="showL2" checked> L2</label>
+      <label><input type="checkbox" id="showRouter" checked> Router</label>
+      <label><input type="checkbox" id="showNeighbor" checked> Neighbor</label>
+      <label><input type="checkbox" id="showUnknown"> Unknown</label>
+    </div>
+    <label>Etichette:
+      <select id="labelMode">
+        <option value="name">Nome</option>
+        <option value="ip">IP</option>
+        <option value="both">Nome + IP</option>
+        <option value="none">Nessuna</option>
+      </select>
+    </label>
+    <div id="stats">
+      <span id="nodeCount">Nodi: 0</span>
+      <span id="linkCount">Link: 0</span>
+    </div>
+  </div>
+  
+  <div id="legend">
+    <h4>Legenda</h4>
+    <div class="legend-item"><img src="img/dev/s3mg.png" class="legend-icon"> Switch L3</div>
+    <div class="legend-item"><img src="img/dev/s2mg.png" class="legend-icon"> Switch L2</div>
+    <div class="legend-item"><img src="img/dev/rtmg.png" class="legend-icon"> Router</div>
+    <div class="legend-item"><img src="img/dev/wamg.png" class="legend-icon"> Access Point</div>
+    <div class="legend-item"><img src="img/dev/smsu.png" class="legend-icon"> Unknown</div>
+  </div>
+  
+  <div id="zoom-controls">
+    <button id="zoomIn">+</button>
+    <button id="zoomOut">−</button>
+    <button id="zoomReset">⟲</button>
+  </div>
+  
+  <div class="tooltip" id="tooltip" style="display:none;"></div>
+
+<script>
+// Configuration (NeDi original values!)
+const config = {
+  iconSize: 32,
+  linkDistance: 30,       // NeDi usa len/4 con len=120 → 30
+  chargeStrength: -50,    // NeDi usa -50 (non -800!)
+  collisionRadius: 40,
+  gravity: 0.08,          // NeDi gravity
+  friction: 0.75          // NeDi friction
+};
+
+// Icon mapping based on device type
+// NeDi format: [type][size][status].png
+// type: s2=L2 switch, s3=L3 switch, rt=router, wa=wireless AP, sm=small
+// size: l=large, m=medium, s=small (for switches/routers)
+// status: a=alert/red, g=green, n=normal/blue, u=unknown/gray, w=warning/orange
+function getDeviceIcon(device) {
+  const type = (device.type || '').toLowerCase();
+  const devStatus = (device.status || '').toLowerCase();
+  const sysname = (device.label || device.sysname || '').toLowerCase();
+  const sysdescr = (device.sysdescr || '').toLowerCase();
+  
+  let iconType = 's2'; // default switch L2
+  let size = 'm';      // medium
+  let status = 'g';    // green = ok
+  
+  // Check if it's an Access Point (by name or status=neighbor with AP name)
+  if (sysname.includes('ap-') || sysname.includes('pdv') || sysname.includes('-ap')) {
+    return 'img/dev/wamg.png'; // Wireless AP medium green (NeDi style)
+  }
+  
+  // Check if it's a neighbor/unknown device
+  if (devStatus === 'neighbor' || type === 'neighbor') {
+    // Unknown neighbor - use small gray icon
+    return 'img/dev/smsu.png';
+  }
+  
+  // Determine device type for known devices
+  if (type === 'l3' || sysname.includes('l3') || sysname.includes('6730')) {
+    iconType = 's3';
+  } else if (type === 'l2' || sysname.includes('l2')) {
+    iconType = 's2';
+  } else if (type === 'router' || sysdescr.includes('router')) {
+    iconType = 'rt';
+  }
+  
+  // Determine status color
+  if (devStatus === 'down') {
+    status = 'a'; // alert/red
+  } else if (devStatus === 'warning') {
+    status = 'w'; // warning/orange
+  }
+  
+  // Build icon path: type + size + status
+  return `img/dev/${iconType}${size}${status}.png`;
+}
+
+// Link color based on speed/type
+function getLinkColor(link) {
+  const speed = link.speed || 0;
+  if (speed >= 10000) return '#800080'; // purple - 10G+
+  if (speed >= 1000) return '#cc0000';  // red - 1G
+  if (speed >= 100) return '#ff8c00';   // orange - 100M
+  if (speed >= 10) return '#0066cc';    // blue - 10M
+  return '#666666';                      // gray - unknown
+}
+
+function getLinkWidth(link) {
+  const speed = link.speed || 0;
+  if (speed >= 10000) return 4;
+  if (speed >= 1000) return 3;
+  if (speed >= 100) return 2;
+  return 1;
+}
+
+// Main visualization
+const svg = d3.select('#topology');
+const container = svg.append('g');
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+// Zoom behavior
+const zoom = d3.zoom()
+  .scaleExtent([0.1, 4])
+  .on('zoom', (event) => {
+    container.attr('transform', event.transform);
+  });
+
+svg.call(zoom);
+
+// Zoom controls
+d3.select('#zoomIn').on('click', () => svg.transition().call(zoom.scaleBy, 1.3));
+d3.select('#zoomOut').on('click', () => svg.transition().call(zoom.scaleBy, 0.7));
+d3.select('#zoomReset').on('click', () => svg.transition().call(zoom.transform, d3.zoomIdentity));
+
+// Tooltip
+const tooltip = d3.select('#tooltip');
+
+// Force simulation
+let simulation;
+let allNodes = [];
+let allLinks = [];
+let filteredNodes = [];
+let filteredLinks = [];
+
+// Load data
+async function loadData() {
+  try {
+    const response = await fetch('/api/map-db?lev=4&mde=f');
+    const data = await response.json();
+    
+    allNodes = data.nodes.map((n, i) => ({
+      ...n,
+      index: i,
+      icon: getDeviceIcon(n)
+    }));
+    
+    // Create node index map by multiple keys
+    const nodeById = new Map();
+    allNodes.forEach(n => {
+      nodeById.set(n.id, n);
+      if (n.ip) nodeById.set(n.ip, n);
+      if (n.label) nodeById.set(n.label, n);
+      if (n.sysname) nodeById.set(n.sysname, n);
+    });
+    
+    // Process links - only keep those with valid nodes AND valid interface names
+    allLinks = [];
+    for (const l of data.links) {
+      const sourceNode = nodeById.get(l.source) || nodeById.get(l.from);
+      const targetNode = nodeById.get(l.target) || nodeById.get(l.to);
+      
+      const di = l.di || l.localIf || l.localPort || '';
+      const ni = l.ni || l.remoteIf || l.remotePort || '';
+      
+      if (sourceNode && targetNode && sourceNode !== targetNode) {
+        allLinks.push({
+          source: sourceNode,
+          target: targetNode,
+          di: di,  // Device Interface (NeDi format)
+          ni: ni,  // Neighbor Interface (NeDi format)
+          protocol: l.protocol || '',
+          speed: l.speed || 0
+        });
+      }
+    }
+    
+    console.log(`Loaded ${allNodes.length} nodes, ${allLinks.length} links`);
+    filterAndRender();
+  } catch (err) {
+    console.error('Error loading data:', err);
+  }
+}
+
+function filterAndRender() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const showL3 = document.getElementById('showL3').checked;
+  const showL2 = document.getElementById('showL2').checked;
+  const showRouter = document.getElementById('showRouter').checked;
+  const showNeighbor = document.getElementById('showNeighbor').checked;
+  const showUnknown = document.getElementById('showUnknown').checked;
+  
+  // Filter nodes
+  filteredNodes = allNodes.filter(n => {
+    const type = (n.type || '').toLowerCase();
+    const label = (n.label || n.sysname || '').toLowerCase();
+    const ip = n.ip || n.id || '';
+    const sysname = (n.sysname || '').toLowerCase();
+    const status = (n.status || '').toLowerCase();
+
+    // Filtra nodi con MAC address come nome (formato xx:xx:xx:xx:xx:xx)
+    const isMacAddress = /^[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$/i.test(label);
+    if (isMacAddress) return false;
+
+    // Riconosci Access Point (AP) dai nomi
+    const isAp = sysname.includes('ap-') || sysname.includes('pdv') || sysname.includes('-ap');
+
+    // Riconosci switch L2/L3 dai nomi (10_L2_Rack*, 10_L3_*, ecc.)
+    const isSwitch =
+      sysname.includes('l2_') ||
+      sysname.includes('l3_') ||
+      sysname.includes('rack') ||
+      sysname.includes('switch');
+
+    // Router (tipo o nome)
+    const isRouter =
+      type === 'router' ||
+      sysname.includes('router') ||
+      label.includes('router');
+
+    // Tieni SOLO infrastruttura: switch + router + AP
+    const isInfra = isSwitch || isRouter || isAp;
+    if (!isInfra) return false;
+
+    // Rispetta i checkbox solo per i tipi ammessi
+    if (isSwitch && !showL2 && !showL3) return false;
+    if (isRouter && !showRouter) return false;
+
+    // I neighbor "puri" che non sono AP non interessano
+    if (!isAp && (type === 'neighbor' || status === 'neighbor') && !showNeighbor) return false;
+    if (type === 'unknown' && !showUnknown) return false;
+
+    // Filtro di ricerca
+    if (search && !label.includes(search) && !ip.includes(search)) return false;
+
+    return true;
+  });
+  
+  const nodeIds = new Set(filteredNodes.map(n => n.id));
+  
+  // Filter links
+  filteredLinks = allLinks.filter(l => 
+    nodeIds.has(l.source.id) && nodeIds.has(l.target.id)
+  );
+  
+  // Update stats
+  document.getElementById('nodeCount').textContent = `Nodi: ${filteredNodes.length}`;
+  document.getElementById('linkCount').textContent = `Link: ${filteredLinks.length}`;
+  
+  render();
+}
+
+function render() {
+  container.selectAll('*').remove();
+  
+  // Layout a LIVELLI stile NeDi (map type = layer)
+  // Il campo n.level viene dalla discovery BFS:
+  //  - 0 = seed (es. core *.251)
+  //  - 1 = neighbor diretti del core
+  //  - 2 = neighbor dei neighbor, ecc.
+  const levelHeight = 150;
+  const baseY = 150;
+  const maxPerRow = 12;
+  const rowSpacing = 90;
+  const colSpacing = 90;
+
+  // Forza sempre le coordinate in base al livello, ignorando eventuali x/y dal backend
+  const nodesByLevel = new Map();
+  filteredNodes.forEach((n) => {
+    const lvl = Number.isFinite(n.level) ? n.level : 0;
+    if (!nodesByLevel.has(lvl)) nodesByLevel.set(lvl, []);
+    nodesByLevel.get(lvl).push(n);
+  });
+
+  nodesByLevel.forEach((nodesAtLevel, lvl) => {
+    const centerX = width / 2;
+    const startY = baseY + lvl * levelHeight;
+
+    nodesAtLevel.forEach((n, idx) => {
+      const row = Math.floor(idx / maxPerRow);
+      const col = idx % maxPerRow;
+      const rowY = startY + row * rowSpacing;
+
+      // Distribuzione orizzontale centrata sullo schermo
+      const totalCols = Math.min(nodesAtLevel.length, maxPerRow);
+      const offsetX = (col - (totalCols - 1) / 2) * colSpacing;
+
+      n.x = centerX + offsetX + (Math.random() * 10 - 5);
+      n.y = rowY + (Math.random() * 10 - 5);
+    });
+  });
+  
+  // Fissa il core *.251 in ALTO e CENTRATO (livello 0), come NeDi
+  const coreNode = filteredNodes.find(n =>
+    (n.ip && n.ip.endsWith('.251')) ||
+    ((n.sysname || '').toLowerCase().includes('core'))
+  );
+  if (coreNode) {
+    coreNode.x = width / 2;
+    coreNode.y = baseY;
+    // Blocca la posizione nel force layout
+    coreNode.fx = coreNode.x;
+    coreNode.fy = coreNode.y;
+  }
+  
+  // Force layout LEGGERO solo per evitare sovrapposizioni,
+  // ma senza distruggere la struttura a livelli (usiamo forze deboli).
+  simulation = d3.forceSimulation(filteredNodes)
+    .force('link', d3.forceLink(filteredLinks).id(d => d.id).distance(config.linkDistance).strength(0.2))
+    .force('charge', d3.forceManyBody().strength(config.chargeStrength * 0.3))
+    .force('collision', d3.forceCollide().radius(config.collisionRadius))
+    .velocityDecay(config.friction)
+    .alphaDecay(0.05);
+  
+  // Draw links as paths (NeDi style - needed for textPath)
+  const links = container.append('g')
+    .attr('class', 'links')
+    .selectAll('path')
+    .data(filteredLinks)
+    .enter()
+    .append('path')
+    .attr('class', 'link')
+    .attr('id', (d, i) => `link${i}`)
+    .attr('stroke', d => getLinkColor(d))
+    .attr('stroke-width', d => getLinkWidth(d))
+    .attr('fill', 'none')
+    .on('mouseover', (event, d) => {
+      tooltip.style('display', 'block')
+        .html(`
+          <h4>Link ${d.protocol || 'LLDP'}</h4>
+          <p><b>Local:</b> ${d.localPort || 'N/A'}</p>
+          <p><b>Remote:</b> ${d.remotePort || 'N/A'}</p>
+          <p><b>From:</b> ${d.source.label || d.source.sysname || 'N/A'}</p>
+          <p><b>To:</b> ${d.target.label || d.target.sysname || 'N/A'}</p>
+        `);
+    })
+    .on('mousemove', (event) => {
+      tooltip.style('left', (event.pageX + 15) + 'px')
+        .style('top', (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', () => {
+      tooltip.style('display', 'none');
+    });
+  
+  // Helper: abbrevia e valida nomi interfaccia (NeDi style)
+  // METODO NEDI ORIGINALE: Due etichette con textPath (di + ni)
+  const ifipos = 25; // NeDi usa lal/2 (50/2 = 25%)
+  
+  // Helper per abbreviare nomi interfacce
+  const shortIfName = (name) => {
+    if (!name || typeof name !== 'string') return '';
+    if (name.includes(':')) return ''; // Filtra MAC
+    if (name.length > 20) return '';
+    return name
+      .replace(/^GigabitEthernet/, 'Gi')
+      .replace(/^FastEthernet/, 'Fa')
+      .replace(/^TenGigabitEthernet/, 'Te')
+      .replace(/^Ethernet/, 'Et');
+  };
+  
+  // Path invisibile per textPath (NeDi method)
+  const lnk = container.append('g')
+    .selectAll('path')
+    .data(filteredLinks)
+    .enter()
+    .append('path')
+    .attr('class', 'lnk')
+    .attr('id', (d, i) => `lnk${i}`)
+    .style('fill', 'none')
+    .style('pointer-events', 'none');
+  
+  // Device Interface label (start)
+  const lnksta = container.append('g')
+    .selectAll('text')
+    .data(filteredLinks)
+    .enter()
+    .append('text')
+    .attr('class', 'link-label')
+    .attr('text-anchor', 'start')
+    .attr('id', (d, i) => `linklabel${i}`);
+  
+  lnksta.append('textPath')
+    .attr('xlink:href', (d, i) => `#lnk${i}`)
+    .style('pointer-events', 'none')
+    .attr('startOffset', `${ifipos}%`)
+    .text(d => shortIfName(d.di));
+  
+  // Neighbor Interface label (end)
+  const lnkend = container.append('g')
+    .selectAll('text')
+    .data(filteredLinks)
+    .enter()
+    .append('text')
+    .attr('class', 'link-label')
+    .attr('text-anchor', 'end')
+    .attr('id', (d, i) => `linklabelend${i}`);
+  
+  lnkend.append('textPath')
+    .attr('xlink:href', (d, i) => `#lnk${i}`)
+    .style('pointer-events', 'none')
+    .attr('startOffset', `${100 - ifipos}%`)
+    .text(d => shortIfName(d.ni));
+  
+  // Draw nodes
+  const nodes = container.append('g')
+    .attr('class', 'nodes')
+    .selectAll('g')
+    .data(filteredNodes)
+    .enter()
+    .append('g')
+    .attr('class', 'node')
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended));
+  
+  // Node icons
+  nodes.append('image')
+    .attr('xlink:href', d => d.icon)
+    .attr('width', config.iconSize)
+    .attr('height', config.iconSize)
+    .attr('x', -config.iconSize / 2)
+    .attr('y', -config.iconSize / 2)
+    .on('error', function() {
+      // Fallback if icon not found
+      d3.select(this).attr('xlink:href', 'img/dev/xxgn.png');
+    });
+  
+  // Node labels (filtra MAC addresses)
+  const labelMode = document.getElementById('labelMode').value;
+  if (labelMode !== 'none') {
+    nodes.append('text')
+      .attr('class', 'node-label')
+      .attr('y', config.iconSize / 2 + 12)
+      .text(d => {
+        let text = '';
+        if (labelMode === 'ip') text = d.ip || d.id;
+        else if (labelMode === 'both') text = d.label || d.sysname;
+        else text = d.label || d.sysname || '';
+        
+        // Filtra MAC address
+        if (/^[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}:[0-9a-f]{2}$/i.test(text)) return '';
+        return text;
+      });
+    
+    if (labelMode === 'both') {
+      nodes.append('text')
+        .attr('class', 'node-ip')
+        .attr('y', config.iconSize / 2 + 22)
+        .text(d => d.ip || d.id);
+    }
+  }
+  
+  // Tooltip events
+  nodes
+    .on('mouseover', (event, d) => {
+      tooltip.style('display', 'block')
+        .html(`
+          <h4>${d.label || d.sysname || 'Unknown'}</h4>
+          <p><b>IP:</b> ${d.ip || d.id}</p>
+          <p><b>Tipo:</b> ${d.type || 'N/A'}</p>
+          <p><b>Vendor:</b> ${d.vendor || 'N/A'}</p>
+        `);
+    })
+    .on('mousemove', (event) => {
+      tooltip.style('left', (event.pageX + 15) + 'px')
+        .style('top', (event.pageY - 10) + 'px');
+    })
+    .on('mouseout', () => {
+      tooltip.style('display', 'none');
+    });
+  
+  // NeDi linkArc function (per link curvi)
+  const linkArc = (d) => {
+    const dx = d.target.x - d.source.x;
+    const dy = d.target.y - d.source.y;
+    const dr = 0; // Straight links (NeDi usa arc solo per link multipli)
+    return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,0 ${d.target.x},${d.target.y}`;
+  };
+  
+  // Simulation tick (ESATTO da NeDi)
+  simulation.on('tick', () => {
+    links.attr('d', linkArc);
+    lnk.attr('d', linkArc);
+    
+    // Rotazione anti-flip per etichette (codice NeDi originale)
+    lnksta.attr('transform', function(d) {
+      if (d.target.x < d.source.x) {
+        const bbox = this.getBBox();
+        const rx = bbox.x + bbox.width / 2;
+        const ry = bbox.y + bbox.height / 2;
+        return `rotate(180 ${rx} ${ry})`;
+      }
+      return 'rotate(0)';
+    });
+    
+    lnkend.attr('transform', function(d) {
+      if (d.target.x < d.source.x) {
+        const bbox = this.getBBox();
+        const rx = bbox.x + bbox.width / 2;
+        const ry = bbox.y + bbox.height / 2;
+        return `rotate(180 ${rx} ${ry})`;
+      }
+      return 'rotate(0)';
+    });
+    
+    nodes.attr('transform', d => `translate(${d.x},${d.y})`);
+  });
+}
+
+// Drag functions
+function dragstarted(event, d) {
+  if (!event.active) simulation.alphaTarget(0.3).restart();
+  d.fx = d.x;
+  d.fy = d.y;
+}
+
+function dragged(event, d) {
+  d.fx = event.x;
+  d.fy = event.y;
+}
+
+function dragended(event, d) {
+  if (!event.active) simulation.alphaTarget(0);
+  d.fx = null;
+  d.fy = null;
+}
+
+// Event listeners
+document.getElementById('search').addEventListener('input', filterAndRender);
+document.getElementById('showL3').addEventListener('change', filterAndRender);
+document.getElementById('showL2').addEventListener('change', filterAndRender);
+document.getElementById('showRouter').addEventListener('change', filterAndRender);
+document.getElementById('showNeighbor').addEventListener('change', filterAndRender);
+document.getElementById('showUnknown').addEventListener('change', filterAndRender);
+document.getElementById('labelMode').addEventListener('change', filterAndRender);
+
+// Initialize
+loadData();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+  if (simulation) {
+    simulation.force('center', d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2));
+    simulation.alpha(0.3).restart();
+  }
+});
+</script>
+</body>
+</html>
+

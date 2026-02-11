@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Database
+netmap.db
+netmap.db-shm
+netmap.db-wal
+test_netmap.db
+*.db-journal
+
+# Lock files
+package-lock.json
+
+# Environment & secrets
+.env
+nedi-config.json
+!nedi-config.example.json
+
+# Logs
+logs/
+*.log
+
+# Backups
+*.backup*
+*.bak*
+*.old
+*.orig
+*.pre_optimization
+
+# Binaries
+bin/ollama
+
+# IDE / Editor
+.claude/
+.claude-trace/
+.serena/
+.auto-claude/
+.auto-claude-status
+.claude_settings.json
+.cursorrules
+.worktrees/
+.playwright-mcp/
+
+# Temp / Debug files
+map-debug.json
+scan_request.json
+build-progress.txt
+session-trace.log
+ricerca-interattiva.log
+nedi_cookies.txt
+lldp_*.json
+screenshot-*.png
+
+# OS
+.DS_Store
+Thumbs.db

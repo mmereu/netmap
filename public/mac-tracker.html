@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetMap - MAC Tracker v2</title>
+
+  <!-- Base Theme + MAC Tracker Styles -->
+  <link rel="stylesheet" href="design-system.css">
+  <link rel="stylesheet" href="discovery-industrial.css">
+  <link rel="stylesheet" href="mac-tracker.css">
+</head>
+<body>
+  <!-- Navigation - Fixed position per evitare glitch sticky -->
+  <nav class="navbar" role="banner" style="position: fixed !important; top: 0; left: 0; right: 0; z-index: 9999;">
+    <div class="navbar-brand">
+      <h1>NetMap</h1>
+      <span class="version">v2.0</span>
+    </div>
+    <nav class="navbar-nav" role="navigation">
+      <a href="index.html" class="nav-link">Dashboard</a>
+      <a href="discovery.html" class="nav-link">Discovery</a>
+      <a href="mac-tracker.html" class="nav-link active">MAC Tracker</a>
+      <a href="topology-nedi-layer.html" class="nav-link">Topology</a>
+    </nav>
+  </nav>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- AI Chat Widget -->
+  <div class="ai-chat-widget" id="aiChatWidget">
+    <button class="ai-chat-toggle" id="aiChatToggle" onclick="toggleAiChat()" title="AI Assistant">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      <span class="ai-badge">AI</span>
+    </button>
+
+    <div class="ai-chat-panel" id="aiChatPanel">
+      <div class="ai-chat-header">
+        <div class="ai-chat-title">
+          <span class="ai-icon">🤖</span>
+          <span>NetMap AI Assistant</span>
+        </div>
+        <button class="ai-chat-close" onclick="toggleAiChat()">×</button>
+      </div>
+
+      <div class="ai-chat-messages" id="aiChatMessages">
+        <div class="ai-message ai-message-bot">
+          <div class="ai-message-content">
+            Ciao! Sono l'assistente AI di NetMap. Posso aiutarti con:
+            <ul>
+              <li>🔍 Ricerca MAC address</li>
+              <li>📊 Info dispositivi</li>
+              <li>🌐 Statistiche rete</li>
+              <li>🔧 Troubleshooting</li>
+            </ul>
+            Scrivi una domanda o usa i suggerimenti rapidi.
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-quick-actions">
+        <button onclick="askAi('Quanti dispositivi ci sono nella rete?')">📊 Statistiche</button>
+        <button onclick="askAi('Lista gli switch del sito corrente')">🔌 Switch</button>
+        <button onclick="askAiWithMac()">🔍 Cerca MAC</button>
+      </div>
+
+      <div class="ai-chat-input">
+        <input type="text" id="aiChatInput" placeholder="Scrivi una domanda..."
+               onkeydown="if(event.key==='Enter')sendAiMessage()">
+        <button onclick="sendAiMessage()" id="aiSendBtn">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* AI Chat Widget Styles */
+    .ai-chat-widget {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .ai-chat-toggle {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #00d4ff, #00ff88);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(0, 212, 255, 0.4);
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+    }
+
+    .ai-chat-toggle:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 30px rgba(0, 212, 255, 0.6);
+    }
+
+    .ai-chat-toggle svg {
+      color: #0a0e12;
+    }
+
+    .ai-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ffb000;
+      color: #0a0e12;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 10px;
+    }
+
+    .ai-chat-panel {
+      position: absolute;
+      bottom: 70px;
+      right: 0;
+      width: 380px;
+      max-height: 500px;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      display: none;
+      flex-direction: column;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .ai-chat-panel.active {
+      display: flex;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .ai-chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #1a1f26, #0d1117);
+      border-bottom: 1px solid #30363d;
+    }
+
+    .ai-chat-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #00d4ff;
+      font-weight: 600;
+    }
+
+    .ai-icon {
+      font-size: 20px;
+    }
+
+    .ai-chat-close {
+      background: none;
+      border: none;
+      color: #8b949e;
+      font-size: 24px;
+      cursor: pointer;
+      padding: 0 8px;
+    }
+
+    .ai-chat-close:hover {
+      color: #ff3366;
+    }
+
+    .ai-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 300px;
+    }
+
+    .ai-message {
+      display: flex;
+      gap: 8px;
+    }
+
+    .ai-message-bot .ai-message-content {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 12px;
+      color: #c9d1d9;
+      font-size: 13px;
+      line-height: 1.5;
+      max-width: 90%;
+    }
+
+    .ai-message-bot .ai-message-content ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .ai-message-bot .ai-message-content li {
+      margin: 4px 0;
+    }
+
+    .ai-message-user {
+      justify-content: flex-end;
+    }
+
+    .ai-message-user .ai-message-content {
+      background: linear-gradient(135deg, #238636, #1a7f37);
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: #fff;
+      font-size: 13px;
+      max-width: 80%;
+    }
+
+    .ai-message-loading .ai-message-content {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .ai-typing-dot {
+      width: 8px;
+      height: 8px;
+      background: #00d4ff;
+      border-radius: 50%;
+      animation: typingBounce 1.4s infinite;
+    }
+
+    .ai-typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-8px); }
+    }
+
+    .ai-quick-actions {
+      display: flex;
+      gap: 8px;
+      padding: 8px 16px;
+      border-top: 1px solid #30363d;
+      flex-wrap: wrap;
+    }
+
+    .ai-quick-actions button {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .ai-quick-actions button:hover {
+      background: #30363d;
+      color: #00d4ff;
+      border-color: #00d4ff;
+    }
+
+    .ai-chat-input {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid #30363d;
+      background: #161b22;
+    }
+
+    .ai-chat-input input {
+      flex: 1;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #c9d1d9;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .ai-chat-input input:focus {
+      outline: none;
+      border-color: #00d4ff;
+    }
+
+    .ai-chat-input button {
+      background: linear-gradient(135deg, #00d4ff, #00ff88);
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+    }
+
+    .ai-chat-input button:hover {
+      transform: scale(1.05);
+    }
+
+    .ai-chat-input button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .ai-chat-input button svg {
+      color: #0a0e12;
+    }
+
+    .ai-agent-tag {
+      display: inline-block;
+      background: #30363d;
+      color: #00d4ff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-bottom: 6px;
+    }
+
+    /* Scrollbar */
+    .ai-chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .ai-chat-messages::-webkit-scrollbar-track {
+      background: #0d1117;
+    }
+
+    .ai-chat-messages::-webkit-scrollbar-thumb {
+      background: #30363d;
+      border-radius: 3px;
+    }
+  </style>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text" id="loadingText">Ricerca in corso...</div>
+    <div class="loading-subtext" id="loadingSubtext"></div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="tracker-container">
+
+    <!-- Search Hero -->
+    <section class="search-hero">
+      <h1>MAC Address Tracker</h1>
+
+      <div class="search-form">
+        <div class="search-input-group">
+          <label>MAC Address</label>
+          <input type="text"
+                 id="macInput"
+                 class="mac-input"
+                 placeholder="AA:BB:CC:DD:EE:FF"
+                 maxlength="17"
+                 autocomplete="off"
+                 spellcheck="false">
+        </div>
+
+        <div class="search-input-group">
+          <label>Network (opzionale)</label>
+          <select id="networkSelect" class="network-select">
+            <option value="">Tutte le reti</option>
+            <!-- Add your networks here, e.g.: -->
+            <option value="192.168.1.0/24">01 - Site Alpha</option>
+            <option value="192.168.2.0/24">02 - Site Beta</option>
+            <option value="192.168.3.0/24">03 - Site Gamma</option>
+          </select>
+        </div>
+
+        <div class="search-option-group">
+          <label class="toggle-switch">
+            <input type="checkbox" id="liveRefreshToggle">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label" title="Verifica in tempo reale via SSH (più lento ma più accurato)">
+            Verifica Live
+            <span class="toggle-hint">SSH</span>
+          </span>
+        </div>
+
+        <button class="btn-trace" id="btnTrace" onclick="searchMac()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          TRACE
+        </button>
+
+        <div class="search-timer" id="searchTimer">--</div>
+      </div>
+    </section>
+
+    <!-- Vendor Card -->
+    <section class="vendor-card" id="vendorCard" style="display: none;">
+      <div class="vendor-icon" id="vendorIcon">?</div>
+      <div class="vendor-info">
+        <h2 id="vendorName">Unknown Vendor</h2>
+        <div class="vendor-oui">OUI: <span id="vendorOui">--:--:--</span></div>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" id="resultsSection">
+
+      <!-- Main Layout: Path + Details -->
+      <div class="results-layout">
+
+        <!-- LEFT: Path Visualization -->
+        <section class="path-section">
+          <div class="path-header">
+            <h3>Network Path</h3>
+            <div class="status-badge cache" id="statusBadge">
+              <span id="statusIcon">&#128230;</span>
+              <span id="statusText">Cache</span>
+            </div>
+          </div>
+          <div class="path-visual" id="pathVisual">
+            <!-- Path nodes injected here -->
+          </div>
+        </section>
+
+        <!-- RIGHT: Detail Panel -->
+        <aside class="detail-panel">
+
+          <!-- Location -->
+          <div class="panel-section">
+            <h4><span class="icon">&#128205;</span> Posizione</h4>
+            <div class="detail-row">
+              <span class="detail-label">Switch</span>
+              <span class="detail-value highlight" id="detailSwitch">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">IP Switch</span>
+              <span class="detail-value" id="detailSwitchIp">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Porta</span>
+              <span class="detail-value highlight" id="detailPort">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">VLAN</span>
+              <span class="detail-value" id="detailVlan">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Tipo Porta</span>
+              <span class="detail-value" id="detailPortType">--</span>
+            </div>
+          </div>
+
+          <!-- ARP / IP Info -->
+          <div class="panel-section">
+            <h4><span class="icon">&#127760;</span> ARP / IP</h4>
+            <div class="detail-row">
+              <span class="detail-label">IP Address</span>
+              <span class="detail-value info" id="detailIp">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Hostname</span>
+              <span class="detail-value" id="detailHostname">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Last Seen</span>
+              <span class="detail-value" id="detailArpLastSeen">--</span>
+            </div>
+          </div>
+
+          <!-- LLDP Details -->
+          <div class="panel-section">
+            <h4><span class="icon">&#128225;</span> LLDP Neighbor</h4>
+            <div class="detail-row">
+              <span class="detail-label">System Name</span>
+              <span class="detail-value info" id="detailLldpName">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Description</span>
+              <span class="detail-value" id="detailLldpDesc">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Management IP</span>
+              <span class="detail-value" id="detailLldpIp">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Capabilities</span>
+              <span class="detail-value" id="detailLldpCaps">--</span>
+            </div>
+          </div>
+
+          <!-- MAC Info -->
+          <div class="panel-section">
+            <h4><span class="icon">&#128279;</span> MAC Info</h4>
+            <div class="detail-row">
+              <span class="detail-label">MAC Address</span>
+              <span class="detail-value highlight" id="detailMac">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Vendor</span>
+              <span class="detail-value" id="detailVendor">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Source</span>
+              <span class="detail-value success" id="detailSource">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Response Time</span>
+              <span class="detail-value" id="detailElapsed">--</span>
+            </div>
+          </div>
+
+        </aside>
+      </div>
+
+      <!-- Tabs Section -->
+      <section class="tabs-section">
+        <nav class="tab-nav">
+          <button class="tab-btn active" data-tab="switches" onclick="showTab('switches')">
+            &#128202; Multi-Switch
+          </button>
+          <button class="tab-btn" data-tab="history" onclick="showTab('history')">
+            &#128197; Storico
+          </button>
+          <button class="tab-btn" data-tab="vlans" onclick="showTab('vlans')">
+            &#127991; VLAN History
+          </button>
+        </nav>
+
+        <div class="tab-content" id="tabContent">
+          <!-- Tab content injected here -->
+        </div>
+      </section>
+
+    </section>
+
+    <!-- No Results -->
+    <section class="no-results" id="noResults" style="display: none;">
+      <div class="no-results-icon">&#128269;</div>
+      <h3>MAC Address Non Trovato</h3>
+      <p>Il MAC non e stato trovato nel database NeDi.</p>
+      <p id="noResultsHint">Seleziona una rete e prova la ricerca live via SSH sugli switch.</p>
+      <button class="btn btn-primary" id="btnSearchLive" onclick="searchMacLive()" style="margin-top: 1rem;">
+        &#128225; Cerca Live SSH
+      </button>
+    </section>
+
+  </main>
+
+  <script>
+    // ============================================
+    // MAC TRACKER V2 - JAVASCRIPT
+    // ============================================
+
+    let currentData = null;
+    let currentTab = 'switches';
+
+    // Format MAC as user types
+    document.getElementById('macInput').addEventListener('input', function(e) {
+      const hex = e.target.value.replace(/[^0-9A-Fa-f]/g, '').toLowerCase().slice(0, 12);
+      let formatted = '';
+      for (let i = 0; i < hex.length; i += 2) {
+        if (i > 0) formatted += ':';
+        formatted += hex.slice(i, i + 2);
+      }
+      e.target.value = formatted;
+    });
+
+    // Enter key triggers search
+    document.getElementById('macInput').addEventListener('keydown', e => {
+      if (e.key === 'Enter') searchMac();
+    });
+
+    // Toast notification
+function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      const icon = type === 'error' ? '&#10060;' : type === 'success' ? '&#9989;' : '&#8505;';
+      toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
+    // Escape HTML
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(text || '').replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Format timestamp
+    function formatTime(ts) {
+      if (!ts) return '--';
+      const date = new Date(ts * 1000);
+      return date.toLocaleString('it-IT', {
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    // Time ago
+    function timeAgo(ts) {
+      if (!ts) return '--';
+      const now = Math.floor(Date.now() / 1000);
+      const diff = now - ts;
+      if (diff < 60) return `${diff}s fa`;
+      if (diff < 3600) return `${Math.floor(diff/60)}m fa`;
+      if (diff < 86400) return `${Math.floor(diff/3600)}h fa`;
+      return `${Math.floor(diff/86400)}d fa`;
+    }
+
+    // Get vendor icon
+    function getVendorIcon(vendor) {
+      if (!vendor) return '&#128268;';
+      const v = vendor.toLowerCase();
+      if (v.includes('cisco')) return '&#127760;';
+      if (v.includes('huawei')) return '&#128225;';
+      if (v.includes('hp') || v.includes('hewlett')) return '&#128187;';
+      if (v.includes('apple')) return '&#127822;';
+      if (v.includes('extreme')) return '&#9889;';
+      if (v.includes('aruba')) return '&#128246;';
+      return '&#128268;';
+    }
+
+    // Main search function
+    async function searchMac() {
+      const macInput = document.getElementById('macInput').value.trim();
+      const cleanMac = macInput.replace(/[^0-9A-Fa-f]/g, '').toLowerCase();
+
+      if (cleanMac.length < 6) {
+        showToast('Inserisci almeno 6 caratteri del MAC', 'error');
+        return;
+      }
+
+      const network = document.getElementById('networkSelect').value || '';
+      const liveRefresh = document.getElementById('liveRefreshToggle').checked;
+
+      // Show loading
+      document.getElementById('loadingOverlay').classList.add('active');
+      document.getElementById('loadingText').textContent = liveRefresh
+        ? 'Verifica live via SSH...'
+        : 'Ricerca nel database NeDi...';
+      document.getElementById('loadingSubtext').textContent = '';
+      document.getElementById('btnTrace').disabled = true;
+      document.getElementById('resultsSection').classList.remove('active');
+      document.getElementById('noResults').style.display = 'none';
+      document.getElementById('noResultsHint').textContent = 'Seleziona una rete e prova la ricerca live via SSH sugli switch.';
+      document.getElementById('btnSearchLive').style.display = 'inline-block';
+      document.getElementById('vendorCard').style.display = 'none';
+
+      const t0 = Date.now();
+      updateTimer(t0);
+
+      try {
+        // Call the hybrid endpoint (parallel SSH search for accurate endpoint detection)
+        const response = await fetch('/api/search/mac/hybrid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mac: macInput, network })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Errore nella ricerca');
+        }
+
+        currentData = data;
+        displayResults(data);
+
+      } catch (error) {
+        showToast(error.message, 'error');
+        document.getElementById('noResults').style.display = 'block';
+      } finally {
+        document.getElementById('loadingOverlay').classList.remove('active');
+        document.getElementById('btnTrace').disabled = false;
+        document.getElementById('searchTimer').textContent = `${Date.now() - t0}ms`;
+        document.getElementById('searchTimer').classList.add('active');
+      }
+    }
+
+    // Update timer while loading
+    function updateTimer(startTime) {
+      const timer = document.getElementById('searchTimer');
+      const update = () => {
+        if (document.getElementById('loadingOverlay').classList.contains('active')) {
+          timer.textContent = `${Date.now() - startTime}ms`;
+          requestAnimationFrame(update);
+        }
+      };
+      update();
+    }
+
+    // Display results
+    function displayResults(data) {
+      if (!data.found) {
+        document.getElementById('noResults').style.display = 'block';
+        return;
+      }
+
+      // Show sections
+      document.getElementById('resultsSection').classList.add('active');
+      document.getElementById('vendorCard').style.display = 'flex';
+
+      // Vendor card
+      document.getElementById('vendorName').textContent = data.vendor?.name || 'Unknown';
+      document.getElementById('vendorOui').textContent = data.vendor?.oui || '--';
+      document.getElementById('vendorIcon').innerHTML = getVendorIcon(data.vendor?.name);
+
+      // Status badge
+      const badge = document.getElementById('statusBadge');
+      badge.className = `status-badge ${data.phase}`;
+      document.getElementById('statusIcon').innerHTML = data.phase === 'live' ? '&#9889;' : '&#128230;';
+      document.getElementById('statusText').textContent = data.phase === 'live' ? 'Live' : 'Cache';
+
+      // Location details (hybrid endpoint uses device/deviceIp/ifName, instant uses switch/switchIp/port)
+      const ep = data.endpoint || {};
+      document.getElementById('detailSwitch').textContent = ep.device || ep.switch || '--';
+      document.getElementById('detailSwitchIp').textContent = ep.deviceIp || ep.switchIp || '--';
+      document.getElementById('detailPort').textContent = ep.ifName || ep.port || '--';
+      document.getElementById('detailVlan').textContent = ep.vlan || '--';
+      document.getElementById('detailPortType').textContent = ep.portType || '--';
+
+      // ARP/IP details
+      document.getElementById('detailIp').textContent = data.ip || '--';
+      document.getElementById('detailHostname').textContent = data.hostname || '--';
+      document.getElementById('detailArpLastSeen').textContent = formatTime(data.lastSeen);
+
+      // LLDP details
+      const lldp = data.lldp || {};
+      document.getElementById('detailLldpName').textContent = lldp.sysName || '--';
+      document.getElementById('detailLldpDesc').textContent = lldp.sysDesc || '--';
+      document.getElementById('detailLldpIp').textContent = lldp.mgmtIp || '--';
+      document.getElementById('detailLldpCaps').textContent = lldp.caps || '--';
+
+      // MAC details
+      document.getElementById('detailMac').textContent = data.normalized || data.mac || data.query || '--';
+      document.getElementById('detailVendor').textContent = data.vendor?.name || '--';
+      document.getElementById('detailSource').textContent = data.source || '--';
+      // elapsed can be string "91067ms" or number
+      const elapsed = data.elapsed;
+      document.getElementById('detailElapsed').textContent = elapsed ? (typeof elapsed === 'string' ? elapsed : `${elapsed}ms`) : '--';
+
+      // Build path visualization
+      const pathVisual = document.getElementById('pathVisual');
+      pathVisual.innerHTML = '';
+      if (data.path && Array.isArray(data.path)) {
+        data.path.forEach((node, idx) => {
+          const nodeEl = document.createElement('div');
+          nodeEl.className = 'path-node';
+          nodeEl.innerHTML = `
+            <div class="node-label">${escapeHtml(node.name || node.label || `Node ${idx}`)}</div>
+            <div class="node-detail">${escapeHtml(node.detail || '')}</div>
+          `;
+          pathVisual.appendChild(nodeEl);
+          
+          if (idx < data.path.length - 1) {
+            const arrow = document.createElement('div');
+            arrow.className = 'path-arrow';
+            arrow.innerHTML = '&#8594;';
+            pathVisual.appendChild(arrow);
+          }
+        });
+      }
+
+      // Display tabs
+      showTab(currentTab);
+    }
+
+    // Show tab content
+    function showTab(tabName) {
+      currentTab = tabName;
+      const tabContent = document.getElementById('tabContent');
+      tabContent.innerHTML = '';
+
+      if (!currentData) return;
+
+      // Update active button
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabName);
+      });
+
+      if (tabName === 'switches' && currentData.switches) {
+        const switches = Array.isArray(currentData.switches) ? currentData.switches : [];
+        if (switches.length === 0) {
+          tabContent.innerHTML = '<p class="tab-empty">Nessuno switch trovato</p>';
+        } else {
+          const table = document.createElement('table');
+          table.className = 'results-table';
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>Switch</th>
+                <th>Porta</th>
+                <th>VLAN</th>
+                <th>MAC</th>
+                <th>Vendor</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${switches.map(sw => `
+                <tr>
+                  <td>${escapeHtml(sw.switch || '--')}</td>
+                  <td>${escapeHtml(sw.port || '--')}</td>
+                  <td>${sw.vlan || '--'}</td>
+                  <td><code>${escapeHtml(sw.mac || '--')}</code></td>
+                  <td>${escapeHtml(sw.vendor || '--')}</td>
+                  <td>${formatTime(sw.timestamp)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+          tabContent.appendChild(table);
+        }
+      } else if (tabName === 'history' && currentData.history) {
+        const history = Array.isArray(currentData.history) ? currentData.history : [];
+        if (history.length === 0) {
+          tabContent.innerHTML = '<p class="tab-empty">Nessuno storico disponibile</p>';
+        } else {
+          const list = document.createElement('div');
+          list.className = 'history-list';
+          list.innerHTML = history.map(h => `
+            <div class="history-item">
+              <div class="history-time">${formatTime(h.timestamp)}</div>
+              <div class="history-detail">${escapeHtml(h.detail || '')}</div>
+            </div>
+          `).join('');
+          tabContent.appendChild(list);
+        }
+      } else if (tabName === 'vlans' && currentData.vlans) {
+        const vlans = Array.isArray(currentData.vlans) ? currentData.vlans : [];
+        if (vlans.length === 0) {
+          tabContent.innerHTML = '<p class="tab-empty">Nessuna VLAN trovata</p>';
+        } else {
+          const table = document.createElement('table');
+          table.className = 'results-table';
+          table.innerHTML = `
+            <thead>
+              <tr>
+                <th>VLAN ID</th>
+                <th>VLAN Name</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${vlans.map(vl => `
+                <tr>
+                  <td>${vl.id || '--'}</td>
+                  <td>${escapeHtml(vl.name || '--')}</td>
+                  <td>${formatTime(vl.timestamp)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          `;
+          tabContent.appendChild(table);
+        }
+      }
+    }
+
+    // Search Live via SSH
+    function searchMacLive() {
+      const macInput = document.getElementById('macInput').value.trim();
+      const network = document.getElementById('networkSelect').value;
+
+      if (!network) {
+        showToast('Seleziona una rete per la ricerca live', 'error');
+        return;
+      }
+
+      showToast('Ricerca live avviata via SSH...', 'info');
+      // Trigger live search logic (implementation depends on backend)
+      const checkbox = document.getElementById('liveRefreshToggle');
+      checkbox.checked = true;
+      searchMac();
+    }
+
+    // ============================================
+    // AI CHAT FUNCTIONS
+    // ============================================
+
+    let aiSessionId = null;
+    let aiChatOpen = false;
+
+    function toggleAiChat() {
+      const panel = document.getElementById('aiChatPanel');
+      aiChatOpen = !aiChatOpen;
+      panel.classList.toggle('active', aiChatOpen);
+      if (aiChatOpen) {
+        document.getElementById('aiChatInput').focus();
+      }
+    }
+
+    function addAiMessage(content, isUser = false, agent = null) {
+      const container = document.getElementById('aiChatMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = `ai-message ${isUser ? 'ai-message-user' : 'ai-message-bot'}`;
+
+      let html = '';
+      if (!isUser && agent) {
+        html += `<span class="ai-agent-tag">🤖 ${escapeHtml(agent)}</span>`;
+      }
+      html += `<div class="ai-message-content">${isUser ? escapeHtml(content) : formatAiResponse(content)}</div>`;
+
+      msgDiv.innerHTML = html;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function addAiLoading() {
+      const container = document.getElementById('aiChatMessages');
+      const msgDiv = document.createElement('div');
+      msgDiv.className = 'ai-message ai-message-bot ai-message-loading';
+      msgDiv.id = 'aiLoadingMsg';
+      msgDiv.innerHTML = `
+        <div class="ai-message-content">
+          <div class="ai-typing-dot"></div>
+          <div class="ai-typing-dot"></div>
+          <div class="ai-typing-dot"></div>
+        </div>
+      `;
+      container.appendChild(msgDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeAiLoading() {
+      const loading = document.getElementById('aiLoadingMsg');
+      if (loading) loading.remove();
+    }
+
+    function formatAiResponse(text) {
+      // Convert markdown-like formatting
+      return escapeHtml(text)
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>')
+        .replace(/- /g, '• ');
+    }
+
+    async function sendAiMessage() {
+      const input = document.getElementById('aiChatInput');
+      const message = input.value.trim();
+
+      if (!message) return;
+
+      // Add user message
+      addAiMessage(message, true);
+      input.value = '';
+
+      // Disable send button
+      const sendBtn = document.getElementById('aiSendBtn');
+      sendBtn.disabled = true;
+
+      // Show loading
+      addAiLoading();
+
+      try {
+        const response = await fetch('/api/agent/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message,
+            sessionId: aiSessionId
+          })
+        });
+
+        const data = await response.json();
+
+        removeAiLoading();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Errore AI');
+        }
+
+        // Save session ID for conversation history
+        aiSessionId = data.sessionId;
+
+        // Add bot response
+        addAiMessage(data.response, false, data.agent);
+
+      } catch (error) {
+        removeAiLoading();
+        addAiMessage(`❌ Errore: ${error.message}`, false);
+      } finally {
+        sendBtn.disabled = false;
+        document.getElementById('aiChatInput').focus();
+      }
+    }
+
+    function askAi(question) {
+      document.getElementById('aiChatInput').value = question;
+      sendAiMessage();
+    }
+
+    function askAiWithMac() {
+      const mac = document.getElementById('macInput').value.trim();
+      if (mac) {
+        askAi(`Cerca informazioni sul MAC ${mac}`);
+      } else {
+        askAi('Come posso cercare un MAC address?');
+      }
+    }
+
+    // Check AI status on load
+    async function checkAiStatus() {
+      try {
+        const response = await fetch('/api/agent/status');
+        const data = await response.json();
+        if (data.status !== 'ready') {
+          console.warn('AI Agent not ready:', data.status);
+        }
+      } catch (e) {
+        console.warn('AI Agent status check failed:', e.message);
+      }
+    }
+
+    // Initialize
+    checkAiStatus();
+  </script>
+</body>
+</html>

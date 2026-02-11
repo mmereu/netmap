@@ -1,0 +1,518 @@
+/**
+ * Keyboard Shortcuts Styles
+ *
+ * Styling for keyboard shortcut visual indicators, help modal, and toast notifications.
+ * Consistent with the industrial dark theme from discovery-industrial.css
+ */
+
+/* ============================================
+   KBD TAG STYLING - Shortcut Hints
+   ============================================ */
+
+/* Base kbd element for shortcut display */
+kbd,
+.keyboard-shortcut-hint {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 2px 6px;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Consolas', monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--text-primary, #E5E5E5);
+  background: var(--bg-input, #0D0D0D);
+  border: 1px solid var(--border-default, #2A2A2A);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Kbd hover effect */
+kbd:hover,
+.keyboard-shortcut-hint:hover {
+  background: var(--bg-elevated, #1A1A1A);
+  border-color: var(--border-active, #404040);
+}
+
+/* Small kbd variant for inline hints */
+.keyboard-shortcut-hint.small {
+  min-width: 18px;
+  height: 18px;
+  padding: 1px 4px;
+  font-size: 0.6rem;
+}
+
+/* Large kbd variant for modal display */
+.keyboard-shortcut-hint.large,
+.shortcut-key {
+  min-width: 28px;
+  height: 28px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(to bottom, var(--bg-elevated, #1A1A1A), var(--bg-input, #0D0D0D));
+  border-color: var(--border-active, #404040);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+/* Highlighted kbd (e.g., for currently pressed key) */
+.keyboard-shortcut-hint.active,
+kbd.active {
+  color: var(--amber, #F59E0B);
+  border-color: var(--amber, #F59E0B);
+  box-shadow: 0 0 8px var(--amber-glow, rgba(245, 158, 11, 0.3));
+}
+
+/* ============================================
+   HELP MODAL - Keyboard Shortcuts Panel
+   ============================================ */
+
+/* Modal container */
+.keyboard-shortcuts-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+.keyboard-shortcuts-modal.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Modal backdrop */
+.keyboard-shortcuts-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+/* Modal content */
+.keyboard-shortcuts-content {
+  position: relative;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  background: var(--bg-panel, #161616);
+  border: 2px solid var(--border-default, #2A2A2A);
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+              0 0 0 1px rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.95) translateY(-10px);
+  transition: transform 0.2s ease;
+}
+
+.keyboard-shortcuts-modal.visible .keyboard-shortcuts-content {
+  transform: scale(1) translateY(0);
+}
+
+/* Accent line at top */
+.keyboard-shortcuts-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--amber, #F59E0B) 0%, var(--amber-dim, #B45309) 100%);
+}
+
+/* Modal header */
+.keyboard-shortcuts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--bg-secondary, #111111);
+  border-bottom: 1px solid var(--border-default, #2A2A2A);
+  flex-shrink: 0;
+}
+
+.keyboard-shortcuts-header h3 {
+  margin: 0;
+  font-family: var(--font-display, 'Orbitron', sans-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--amber, #F59E0B);
+  text-shadow: 0 0 20px var(--amber-glow, rgba(245, 158, 11, 0.3));
+}
+
+/* Modal close button */
+.keyboard-shortcuts-close {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: var(--bg-input, #0D0D0D);
+  border: 1px solid var(--border-default, #2A2A2A);
+  border-radius: 4px;
+  color: var(--text-secondary, #A3A3A3);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.keyboard-shortcuts-close:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: var(--red-alert, #EF4444);
+  color: var(--red-alert, #EF4444);
+}
+
+/* Modal body */
+.keyboard-shortcuts-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-active, #404040) transparent;
+}
+
+.keyboard-shortcuts-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.keyboard-shortcuts-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.keyboard-shortcuts-body::-webkit-scrollbar-thumb {
+  background: var(--border-active, #404040);
+  border-radius: 3px;
+}
+
+.keyboard-shortcuts-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted, #525252);
+}
+
+/* Shortcut category */
+.shortcut-category {
+  margin-bottom: 24px;
+}
+
+.shortcut-category:last-child {
+  margin-bottom: 0;
+}
+
+.shortcut-category-title {
+  margin: 0 0 12px 0;
+  font-family: var(--font-mono, 'JetBrains Mono', 'Consolas', monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--cyan-data, #06B6D4);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-default, #2A2A2A);
+}
+
+/* Shortcut list */
+.shortcut-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Individual shortcut item */
+.shortcut-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--bg-input, #0D0D0D);
+  border: 1px solid var(--border-default, #2A2A2A);
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+
+.shortcut-item:hover {
+  background: var(--bg-elevated, #1A1A1A);
+  border-color: var(--border-active, #404040);
+}
+
+.shortcut-description {
+  font-family: var(--font-ui, 'IBM Plex Sans', system-ui, sans-serif);
+  font-size: 0.85rem;
+  color: var(--text-primary, #E5E5E5);
+  flex: 1;
+  margin-right: 16px;
+}
+
+/* No shortcuts message */
+.no-shortcuts {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted, #525252);
+  font-style: italic;
+}
+
+/* Modal footer */
+.keyboard-shortcuts-footer {
+  padding: 12px 20px;
+  background: var(--bg-secondary, #111111);
+  border-top: 1px solid var(--border-default, #2A2A2A);
+  flex-shrink: 0;
+}
+
+.keyboard-shortcuts-hint {
+  font-family: var(--font-mono, 'JetBrains Mono', 'Consolas', monospace);
+  font-size: 0.7rem;
+  color: var(--text-muted, #525252);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.keyboard-shortcuts-hint kbd {
+  min-width: 20px;
+  height: 20px;
+  padding: 2px 6px;
+  font-size: 0.65rem;
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+
+/* Toast container */
+.keyboard-shortcut-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 10002;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* Individual toast */
+.keyboard-shortcut-toast {
+  font-family: var(--font-mono, 'JetBrains Mono', 'Consolas', monospace);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary, #E5E5E5);
+  background: var(--bg-panel, #161616);
+  border: 1px solid var(--border-default, #2A2A2A);
+  border-left-width: 4px;
+  border-radius: 4px;
+  padding: 12px 16px;
+  min-width: 200px;
+  max-width: 320px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(100%);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.keyboard-shortcut-toast.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Toast types */
+.keyboard-shortcut-toast.info {
+  border-left-color: var(--cyan-data, #06B6D4);
+}
+
+.keyboard-shortcut-toast.success {
+  border-left-color: var(--green-terminal, #22C55E);
+}
+
+.keyboard-shortcut-toast.warning {
+  border-left-color: var(--amber, #F59E0B);
+}
+
+.keyboard-shortcut-toast.error {
+  border-left-color: var(--red-alert, #EF4444);
+}
+
+/* Toast with icon prefix */
+.keyboard-shortcut-toast::before {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+.keyboard-shortcut-toast.info::before {
+  content: '●';
+  color: var(--cyan-data, #06B6D4);
+}
+
+.keyboard-shortcut-toast.success::before {
+  content: '✓';
+  color: var(--green-terminal, #22C55E);
+}
+
+.keyboard-shortcut-toast.warning::before {
+  content: '!';
+  color: var(--amber, #F59E0B);
+}
+
+.keyboard-shortcut-toast.error::before {
+  content: '✕';
+  color: var(--red-alert, #EF4444);
+}
+
+/* ============================================
+   UI HINT ELEMENTS
+   ============================================ */
+
+/* Button with shortcut hint */
+.btn-with-shortcut {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-with-shortcut kbd,
+.btn-with-shortcut .keyboard-shortcut-hint {
+  opacity: 0.7;
+  margin-left: 4px;
+}
+
+.btn-with-shortcut:hover kbd,
+.btn-with-shortcut:hover .keyboard-shortcut-hint {
+  opacity: 1;
+}
+
+/* Input with shortcut hint */
+.input-with-shortcut {
+  position: relative;
+}
+
+.input-with-shortcut .keyboard-shortcut-hint {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.input-with-shortcut input:focus + .keyboard-shortcut-hint {
+  opacity: 0;
+}
+
+/* Shortcut hint inline with text */
+.shortcut-hint-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.shortcut-hint-inline kbd,
+.shortcut-hint-inline .keyboard-shortcut-hint {
+  font-size: 0.65rem;
+  min-width: 18px;
+  height: 18px;
+  padding: 1px 4px;
+}
+
+/* ============================================
+   RESPONSIVE STYLES
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Modal adjustments for mobile */
+  .keyboard-shortcuts-content {
+    width: 95%;
+    max-height: 90vh;
+    margin: 10px;
+  }
+
+  .keyboard-shortcuts-header {
+    padding: 12px 16px;
+  }
+
+  .keyboard-shortcuts-header h3 {
+    font-size: 0.9rem;
+  }
+
+  .keyboard-shortcuts-body {
+    padding: 16px;
+  }
+
+  .shortcut-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .shortcut-description {
+    margin-right: 0;
+    font-size: 0.8rem;
+  }
+
+  /* Toast adjustments for mobile */
+  .keyboard-shortcut-toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .keyboard-shortcut-toast {
+    min-width: auto;
+    max-width: none;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .keyboard-shortcuts-modal,
+  .keyboard-shortcuts-content,
+  .keyboard-shortcut-toast {
+    transition: none;
+  }
+
+  .keyboard-shortcuts-content {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  kbd,
+  .keyboard-shortcut-hint {
+    border-width: 2px;
+  }
+
+  .shortcut-item {
+    border-width: 2px;
+  }
+
+  .keyboard-shortcut-toast {
+    border-width: 2px;
+  }
+}

@@ -1,0 +1,33 @@
+/**
+ * NetMap Unified Design System
+ * ============================
+ * Single entry point for the complete design system.
+ * Include this file in all HTML pages for consistent styling.
+ *
+ * This file imports all design system modules in the correct order:
+ * 1. tokens.css  - CSS variables, colors, typography, spacing (includes Google Fonts)
+ * 2. base.css    - Global reset, body styles, scrollbars, overlay effects
+ * 3. components.css - Reusable UI components (navbar, buttons, cards, etc.)
+ *
+ * Usage in HTML:
+ *   <link rel="stylesheet" href="/design-system.css">
+ *
+ * For page-specific styles, import additional CSS after this file.
+ */
+
+/* ============================================
+   DESIGN SYSTEM IMPORTS
+   Order is critical - do not reorder!
+   ============================================ */
+
+/* 1. Design Tokens - CSS Variables & Fonts
+   Must be first so all other files can reference variables */
+@import url('./design-system/tokens.css');
+
+/* 2. Base Styles - Reset, body, scrollbars, effects
+   Depends on tokens.css for variable references */
+@import url('./design-system/base.css');
+
+/* 3. Component Styles - Reusable UI components
+   Depends on tokens.css and base.css */
+@import url('./design-system/components.css');

@@ -1,0 +1,182 @@
+/**
+ * Groq Direct API - Bypass OpenAI Agents SDK
+ * Implementazione semplificata per MAC search con tool calling nativo
+ */
+
+// OpenRouter API (Groq bloccato da firewall aziendale)
+const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'meta-llama/llama-3.3-70b-instruct'; // Gratuito su OpenRouter
+
+// Tool definition per search_mac
+const TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'search_mac',
+      description: 'Cerca un MAC address nella rete. Trova switch e porta dove è connesso. Se il MAC non è nel database, serve specificare la rete per attivare la ricerca SSH.',
+      parameters: {
+        type: 'object',
+        properties: {
+          mac: {
+            type: 'string',
+            description: 'MAC address da cercare (formato: aa:bb:cc:dd:ee:ff)'
+          },
+          network: {
+            type: 'string',
+            description: 'Rete CIDR dove cercare (es: 10.3.0.0/16). Opzionale ma necessario per ricerca SSH se MAC non in database.'
+          }
+        },
+        required: ['mac']
+      }
+    }
+  }
+];
+
+const SYSTEM_PROMPT = `Sei un assistente di rete specializzato nella ricerca di MAC address.
+Quando l'utente chiede di trovare un MAC address, usa SEMPRE il tool search_mac.
+Rispondi in italiano in modo conciso.`;
+
+/**
+ * Esegue il tool search_mac chiamando l'API locale
+ */
+async function executeSearchMac(mac, network = null) {
+  try {
+    const body = { mac };
+    if (network) body.network = network;
+
+    const response = await fetch('http://localhost:4000/api/search/mac/hybrid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+
+    const result = await response.json();
+
+    if (result.error) {
+      return `Errore: ${result.error}`;
+    }
+
+    if (!result.found) {
+      return `MAC ${mac} non trovato nel database.`;
+    }
+
+    const ep = result.endpoint || {};
+    return `MAC ${mac} TROVATO!
+Switch: ${ep.device || 'N/A'}
+IP Switch: ${ep.deviceIp || 'N/A'}
+Porta: ${ep.ifName || 'N/A'}
+VLAN: ${ep.vlan || 'N/A'}
+Fonte: ${result.source || 'database'}
+Tempo: ${result.elapsed || 'N/A'}`;
+  } catch (err) {
+    return `Errore nella ricerca: ${err.message}`;
+  }
+}
+
+/**
+ * Chat con Groq usando tool calling nativo
+ */
+export async function chatWithGroq(message, history = []) {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) {
+    throw new Error('OPENROUTER_API_KEY non configurata');
+  }
+
+  // Costruisci messaggi
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history,
+    { role: 'user', content: message }
+  ];
+
+  // Prima chiamata a OpenRouter
+  const response = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://netmap.local',
+      'X-Title': 'NetMap AI Assistant'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages,
+      tools: TOOLS,
+      tool_choice: 'auto',
+      max_tokens: 1024
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`OpenRouter API error: ${response.status} - ${err}`);
+  }
+
+  const data = await response.json();
+  const assistantMessage = data.choices?.[0]?.message;
+
+  if (!assistantMessage) {
+    throw new Error('Risposta Groq vuota');
+  }
+
+  // Se non ci sono tool calls, ritorna la risposta diretta
+  if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
+    return {
+      response: assistantMessage.content,
+      agent: 'NetMap Assistant',
+      history: [...messages, assistantMessage]
+    };
+  }
+
+  // Esegui i tool calls
+  const toolResults = [];
+  for (const toolCall of assistantMessage.tool_calls) {
+    if (toolCall.function.name === 'search_mac') {
+      const args = JSON.parse(toolCall.function.arguments);
+      const result = await executeSearchMac(args.mac, args.network);
+      toolResults.push({
+        tool_call_id: toolCall.id,
+        role: 'tool',
+        content: result
+      });
+    }
+  }
+
+  // Seconda chiamata con i risultati dei tool
+  const messagesWithTools = [
+    ...messages,
+    assistantMessage,
+    ...toolResults
+  ];
+
+  const finalResponse = await fetch(API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://netmap.local',
+      'X-Title': 'NetMap AI Assistant'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages: messagesWithTools,
+      max_tokens: 1024
+    })
+  });
+
+  if (!finalResponse.ok) {
+    const err = await finalResponse.text();
+    throw new Error(`OpenRouter API error: ${finalResponse.status} - ${err}`);
+  }
+
+  const finalData = await finalResponse.json();
+  const finalMessage = finalData.choices?.[0]?.message?.content;
+
+  return {
+    response: finalMessage || 'Nessuna risposta',
+    agent: 'MAC Tracker',
+    history: messagesWithTools
+  };
+}
+
+export default { chatWithGroq };

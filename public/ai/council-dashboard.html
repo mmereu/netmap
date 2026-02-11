@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LLM Council Dashboard - NetMap</title>
+  <style>
+    :root {
+      --bg-dark: #0f0f0f;
+      --bg-card: #1a1a1a;
+      --bg-card-hover: #242424;
+      --text-primary: #e0e0e0;
+      --text-secondary: #888;
+      --accent-red: #d32f2f;
+      --accent-green: #4caf50;
+      --accent-yellow: #ffc107;
+      --accent-blue: #2196f3;
+      --border-color: #333;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+      max-width: 1800px;
+      margin: 0 auto;
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header h1 span {
+      font-size: 14px;
+      color: var(--text-secondary);
+      font-weight: normal;
+    }
+
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-healthy { background: rgba(76, 175, 80, 0.2); color: var(--accent-green); }
+    .status-degraded { background: rgba(255, 193, 7, 0.2); color: var(--accent-yellow); }
+    .status-unhealthy { background: rgba(211, 47, 47, 0.2); color: var(--accent-red); }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .card-value {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    /* Provider Cards */
+    .providers-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .provider-card {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .provider-card:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+    }
+
+    .provider-name {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .provider-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .provider-status.up { background: var(--accent-green); }
+    .provider-status.down { background: var(--accent-red); }
+    .provider-status.degraded { background: var(--accent-yellow); }
+
+    .provider-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .provider-stats strong {
+      color: var(--text-primary);
+    }
+
+    /* Metrics */
+    .metrics-row {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      text-align: center;
+    }
+
+    .metric-card .card-value {
+      font-size: 28px;
+    }
+
+    /* Chart placeholder */
+    .chart-container {
+      grid-column: span 2;
+      height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, rgba(33,150,243,0.1), rgba(211,47,47,0.1));
+      border-radius: 8px;
+    }
+
+    /* Leaderboard */
+    .leaderboard {
+      grid-column: span 1;
+    }
+
+    .leaderboard-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .leaderboard-item:last-child {
+      border-bottom: none;
+    }
+
+    .leaderboard-rank {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      margin-right: 12px;
+    }
+
+    .leaderboard-rank.gold { background: linear-gradient(135deg, #ffd700, #ffaa00); color: #000; }
+    .leaderboard-rank.silver { background: linear-gradient(135deg, #c0c0c0, #a0a0a0); color: #000; }
+    .leaderboard-rank.bronze { background: linear-gradient(135deg, #cd7f32, #8b4513); color: #fff; }
+
+    .leaderboard-info {
+      flex: 1;
+    }
+
+    .leaderboard-name {
+      font-weight: 600;
+    }
+
+    .leaderboard-score {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .leaderboard-bar {
+      width: 80px;
+      height: 6px;
+      background: var(--bg-dark);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .leaderboard-bar-fill {
+      height: 100%;
+      background: var(--accent-blue);
+      border-radius: 3px;
+    }
+
+    /* Recent queries */
+    .recent-queries {
+      grid-column: span 2;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .query-item {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      background: var(--bg-dark);
+    }
+
+    .query-item:hover {
+      background: #252525;
+    }
+
+    .query-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .query-type {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+
+    .query-type.consensus { background: rgba(76, 175, 80, 0.2); color: var(--accent-green); }
+    .query-type.divergent { background: rgba(211, 47, 47, 0.2); color: var(--accent-red); }
+    .query-type.cached { background: rgba(33, 150, 243, 0.2); color: var(--accent-blue); }
+
+    .query-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .query-latency {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Footer actions */
+    .actions {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1976d2;
+    }
+
+    .btn-secondary {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: #252525;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .metrics-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .recent-queries,
+      .chart-container {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Header -->
+    <div class="header">
+      <h1>
+        🤖 LLM Council Dashboard
+        <span>v3.0.0</span>
+      </h1>
+      <div id="system-status" class="status-badge status-healthy">Healthy</div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-row">
+      <div class="card metric-card">
+        <div class="card-title">Total Queries</div>
+        <div class="card-value" id="total-queries">-</div>
+        <div class="card-subtitle" id="query-rate">-</div>
+      </div>
+      <div class="card metric-card">
+        <div class="card-title">Success Rate</div>
+        <div class="card-value" id="success-rate">-</div>
+        <div class="card-subtitle">Last 1000 queries</div>
+      </div>
+      <div class="card metric-card">
+        <div class="card-title">Cache Hit Rate</div>
+        <div class="card-value" id="cache-rate">-</div>
+        <div class="card-subtitle" id="cache-size">-</div>
+      </div>
+      <div class="card metric-card">
+        <div class="card-title">Avg Latency</div>
+        <div class="card-value" id="avg-latency">-</div>
+        <div class="card-subtitle" id="p95-latency">P95: -</div>
+      </div>
+      <div class="card metric-card">
+        <div class="card-title">Active Providers</div>
+        <div class="card-value" id="active-providers">-</div>
+        <div class="card-subtitle">of 6 configured</div>
+      </div>
+    </div>
+
+    <!-- Provider Status -->
+    <div class="providers-grid" id="providers-grid">
+      <div class="loading">
+        <div class="spinner"></div>
+        <span>Loading providers...</span>
+      </div>
+    </div>
+
+    <!-- Leaderboard -->
+    <div class="card leaderboard">
+      <div class="card-header">
+        <div class="card-title">Provider Leaderboard</div>
+      </div>
+      <div id="leaderboard">
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Latency Chart -->
+    <div class="card chart-container">
+      <div class="card-title">Latency Distribution (Coming Soon)</div>
+    </div>
+
+    <!-- Recent Queries -->
+    <div class="card recent-queries">
+      <div class="card-header">
+        <div class="card-title">Recent Queries</div>
+        <button class="btn btn-secondary" onclick="clearHistory()">Clear</button>
+      </div>
+      <div id="recent-queries">
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="resetMetrics()">Reset Metrics</button>
+      <button class="btn btn-secondary" onclick="clearCache()">Clear Cache</button>
+      <button class="btn btn-primary" onclick="refreshDashboard()">🔄 Refresh</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api/council';
+    let refreshInterval = null;
+
+    // Fetch and display metrics
+    async function fetchMetrics() {
+      try {
+        const response = await fetch(`${API_BASE}/metrics`);
+        const data = await response.json();
+        updateMetricsUI(data);
+      } catch (error) {
+        console.error('Error fetching metrics:', error);
+      }
+    }
+
+    // Fetch provider status
+    async function fetchStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/status`);
+        const data = await response.json();
+        updateStatusUI(data);
+      } catch (error) {
+        console.error('Error fetching status:', error);
+      }
+    }
+
+    // Fetch leaderboard
+    async function fetchLeaderboard() {
+      try {
+        const response = await fetch(`${API_BASE}/leaderboard`);
+        const data = await response.json();
+        updateLeaderboardUI(data);
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+      }
+    }
+
+    // Update metrics UI
+    function updateMetricsUI(metrics) {
+      document.getElementById('total-queries').textContent = metrics.queries?.total || 0;
+      document.getElementById('query-rate').textContent = metrics.queries?.queryRate || '-';
+      document.getElementById('success-rate').textContent = metrics.queries?.successRate || '-';
+      document.getElementById('cache-rate').textContent = metrics.queries?.cacheHitRate || '-';
+      document.getElementById('avg-latency').textContent = (metrics.latency?.avg || 0) + 'ms';
+      document.getElementById('p95-latency').textContent = `P95: ${metrics.latency?.p95 || 0}ms`;
+
+      // Update system status
+      const status = document.getElementById('system-status');
+      const successRate = parseFloat(metrics.queries?.successRate) || 0;
+      if (successRate >= 90) {
+        status.className = 'status-badge status-healthy';
+        status.textContent = 'Healthy';
+      } else if (successRate >= 70) {
+        status.className = 'status-badge status-degraded';
+        status.textContent = 'Degraded';
+      } else {
+        status.className = 'status-badge status-unhealthy';
+        status.textContent = 'Unhealthy';
+      }
+    }
+
+    // Update status UI
+    function updateStatusUI(status) {
+      const providers = status.providers || [];
+      const circuitBreakers = status.circuitBreakers || {};
+
+      let activeCount = 0;
+      const providersHtml = providers.map(p => {
+        const cb = circuitBreakers[p.name] || {};
+        const isUp = p.configured && cb.state !== 'OPEN';
+        if (isUp) activeCount++;
+
+        const statusClass = !p.configured ? 'down' : (cb.state === 'OPEN' ? 'down' : (cb.state === 'HALF_OPEN' ? 'degraded' : 'up'));
+
+        return `
+          <div class="provider-card">
+            <div class="provider-name">
+              <span class="provider-status ${statusClass}"></span>
+              ${p.name}
+            </div>
+            <div class="provider-stats">
+              <div>Model: <strong>${p.model || 'N/A'}</strong></div>
+              <div>State: <strong>${cb.state || 'N/A'}</strong></div>
+              <div>Success: <strong>${cb.healthScore || 100}%</strong></div>
+              <div>Failures: <strong>${cb.totalFailures || 0}</strong></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('providers-grid').innerHTML = providersHtml;
+      document.getElementById('active-providers').textContent = activeCount;
+    }
+
+    // Update leaderboard UI
+    function updateLeaderboardUI(leaderboard) {
+      if (!Array.isArray(leaderboard) || leaderboard.length === 0) {
+        document.getElementById('leaderboard').innerHTML = '<div class="card-subtitle">No data yet</div>';
+        return;
+      }
+
+      const maxScore = Math.max(...leaderboard.map(p => p.score || 0), 1);
+
+      const html = leaderboard.slice(0, 6).map((provider, index) => {
+        const rankClass = index === 0 ? 'gold' : (index === 1 ? 'silver' : (index === 2 ? 'bronze' : ''));
+        const barWidth = ((provider.score || 0) / maxScore * 100).toFixed(0);
+
+        return `
+          <div class="leaderboard-item">
+            <div class="leaderboard-rank ${rankClass}">${index + 1}</div>
+            <div class="leaderboard-info">
+              <div class="leaderboard-name">${provider.name}</div>
+              <div class="leaderboard-score">${provider.successRate} • ${provider.avgLatency}ms avg</div>
+            </div>
+            <div class="leaderboard-bar">
+              <div class="leaderboard-bar-fill" style="width: ${barWidth}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('leaderboard').innerHTML = html;
+    }
+
+    // Actions
+    async function resetMetrics() {
+      if (!confirm('Reset all metrics? This cannot be undone.')) return;
+      try {
+        await fetch(`${API_BASE}/metrics/reset`, { method: 'POST' });
+        refreshDashboard();
+      } catch (error) {
+        alert('Error resetting metrics: ' + error.message);
+      }
+    }
+
+    async function clearCache() {
+      if (!confirm('Clear response cache?')) return;
+      try {
+        await fetch(`${API_BASE}/cache/clear`, { method: 'POST' });
+        refreshDashboard();
+      } catch (error) {
+        alert('Error clearing cache: ' + error.message);
+      }
+    }
+
+    function clearHistory() {
+      document.getElementById('recent-queries').innerHTML = '<div class="card-subtitle">No queries yet</div>';
+    }
+
+    // Refresh dashboard
+    async function refreshDashboard() {
+      await Promise.all([
+        fetchMetrics(),
+        fetchStatus(),
+        fetchLeaderboard()
+      ]);
+    }
+
+    // Auto-refresh
+    function startAutoRefresh() {
+      refreshInterval = setInterval(refreshDashboard, 10000);  // 10s
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshDashboard();
+      startAutoRefresh();
+    });
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      if (refreshInterval) clearInterval(refreshInterval);
+    });
+  </script>
+</body>
+</html>

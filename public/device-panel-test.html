@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Device Panel - Test Standalone</title>
+  <link rel="stylesheet" href="device-panel.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    .test-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+    }
+    .test-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .test-btn {
+      padding: 15px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+    .test-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    .test-btn:active {
+      transform: translateY(0);
+    }
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    .info-box {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 20px;
+    }
+    .info-box h3 {
+      margin: 0 0 10px 0;
+      color: #1976d2;
+    }
+    .info-box p {
+      margin: 5px 0;
+      color: #555;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🖥️ Device Panel Test</h1>
+    <p class="subtitle">Test del side panel senza backend - Dati mock per UI testing</p>
+
+    <div class="test-buttons">
+      <button class="test-btn" onclick="testSwitch()">
+        🔷 Test Switch L3
+      </button>
+      <button class="test-btn" onclick="testRouter()">
+        🌐 Test Router
+      </button>
+      <button class="test-btn" onclick="testAccessPoint()">
+        📡 Test Access Point
+      </button>
+      <button class="test-btn" onclick="testMinimalData()">
+        ⚠️ Test Dati Minimi
+      </button>
+      <button class="test-btn" onclick="testEmptyPorts()">
+        📭 Test Porte Vuote
+      </button>
+      <button class="test-btn" onclick="testErrorState()">
+        ❌ Test Errore
+      </button>
+    </div>
+
+    <div class="info-box">
+      <h3>📝 Istruzioni</h3>
+      <p><strong>1.</strong> Clicca uno dei bottoni sopra per aprire il panel con dati mock</p>
+      <p><strong>2.</strong> Verifica rendering corretto di Overview, Ports, Neighbors</p>
+      <p><strong>3.</strong> Testa chiusura con × e tasto ESC</p>
+      <p><strong>4.</strong> Prova il pulsante Refresh</p>
+      <p><strong>5.</strong> Controlla console browser per log e debug</p>
+    </div>
+
+    <div class="code-block">
+// API Mock - Intercetta chiamate /api/devices/:name/detail
+// Dati simulati per test UI senza backend attivo
+window.DevicePanelMock = {
+  "10_L3_Core_6730": { /* Switch L3 data */ },
+  "Router_Gateway": { /* Router data */ },
+  "AP_PDV_01": { /* Access Point data */ }
+}
+    </div>
+  </div>
+
+  <!-- Device Panel -->
+  <div id="devicePanel" class="device-panel">
+    <div class="panel-header">
+      <h3 id="panelTitle">Device Details</h3>
+      <button class="panel-close" onclick="closeDevicePanel()">×</button>
+    </div>
+    <div class="panel-tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="ports">Ports</button>
+      <button class="tab" data-tab="neighbors">Neighbors</button>
+    </div>
+    <div class="panel-content">
+      <div id="tabOverview" class="tab-content active"></div>
+      <div id="tabPorts" class="tab-content"></div>
+      <div id="tabNeighbors" class="tab-content"></div>
+    </div>
+    <div class="panel-footer">
+      <button onclick="refreshDevicePanel()">🔄 Refresh</button>
+      <span id="panelTimestamp"></span>
+    </div>
+  </div>
+
+  <script>
+    // Mock data per test
+    const MOCK_DATA = {
+      "switch_l3": {
+        name: "10_L3_Core_6730",
+        sysname: "10_L3_Core_6730",
+        ip: "10.201.0.251",
+        type: "switch-l3",
+        status: "up",
+        model: "Huawei S6730-H48X6C",
+        serial: "2102350ABC12345",
+        mac: "00:1a:2b:3c:4d:5e",
+        os_version: "V200R019C10SPC800",
+        uptime: 8640000,
+        cpu: 15,
+        memory: 42,
+        temperature: 38,
+        location: {
+          building: "Sede Centrale",
+          floor: "2",
+          room: "Server Room A"
+        },
+        ports: [
+          {
+            name: "GigabitEthernet0/0/1",
+            interface: "GE0/0/1",
+            status: "up",
+            admin_status: "up",
+            speed: 1000,
+            description: "Uplink to Core",
+            vlan: "trunk"
+          },
+          {
+            name: "GigabitEthernet0/0/2",
+            status: "up",
+            speed: 1000,
+            description: "Connection to Rack A"
+          },
+          {
+            name: "GigabitEthernet0/0/3",
+            status: "down",
+            speed: 1000,
+            description: ""
+          },
+          {
+            name: "TenGigabitEthernet0/0/48",
+            status: "up",
+            speed: 10000,
+            description: "Fiber uplink 10G"
+          }
+        ],
+        neighbors: [
+          {
+            local_port: "GigabitEthernet0/0/1",
+            remote_device: "20_L2_Rack_A1",
+            remote_port: "GigabitEthernet0/0/24",
+            protocol: "LLDP"
+          },
+          {
+            local_port: "GigabitEthernet0/0/2",
+            remote_device: "30_L2_Rack_B2",
+            remote_port: "GigabitEthernet0/0/1",
+            protocol: "LLDP"
+          }
+        ]
+      },
+      "router": {
+        name: "Router_Gateway",
+        sysname: "Router_Gateway",
+        ip: "10.201.0.1",
+        type: "router",
+        status: "up",
+        model: "Cisco ISR 4331",
+        serial: "FGL2042ABCD",
+        mac: "00:1b:2c:3d:4e:5f",
+        os_version: "IOS XE 16.9.5",
+        uptime: 15552000,
+        cpu: 8,
+        memory: 28,
+        ports: [
+          {
+            name: "GigabitEthernet0/0/0",
+            status: "up",
+            speed: 1000,
+            description: "WAN Interface"
+          },
+          {
+            name: "GigabitEthernet0/0/1",
+            status: "up",
+            speed: 1000,
+            description: "LAN Interface"
+          }
+        ],
+        neighbors: [
+          {
+            local_port: "GigabitEthernet0/0/1",
+            remote_device: "10_L3_Core_6730",
+            remote_port: "GigabitEthernet0/0/10",
+            protocol: "CDP"
+          }
+        ]
+      },
+      "ap": {
+        name: "AP_PDV_01",
+        sysname: "AP_PDV_01",
+        ip: "10.201.5.100",
+        type: "ap",
+        status: "up",
+        model: "Ubiquiti UniFi AP AC Pro",
+        serial: "UBNT-AP-001",
+        mac: "00:2a:3b:4c:5d:6e",
+        os_version: "4.3.20",
+        uptime: 259200,
+        ports: [
+          {
+            name: "eth0",
+            status: "up",
+            speed: 1000,
+            description: "Ethernet PoE"
+          }
+        ],
+        neighbors: [
+          {
+            local_port: "eth0",
+            remote_device: "20_L2_Rack_A1",
+            remote_port: "GigabitEthernet0/0/12",
+            protocol: "LLDP"
+          }
+        ]
+      },
+      "minimal": {
+        name: "MinimalDevice",
+        ip: "192.168.1.100",
+        type: "switch",
+        status: "up"
+      },
+      "empty_ports": {
+        name: "DeviceNoData",
+        sysname: "DeviceNoData",
+        ip: "10.201.1.50",
+        type: "switch-l2",
+        status: "warning",
+        model: "Generic Switch",
+        ports: [],
+        neighbors: []
+      }
+    };
+
+    // Override fetch per intercettare chiamate API
+    const originalFetch = window.fetch;
+    window.fetch = async function(url, ...args) {
+      console.log('[Mock] Fetch intercettato:', url);
+
+      // Intercetta solo chiamate a /api/devices/
+      if (url.includes('/api/devices/') && url.includes('/detail')) {
+        const deviceName = url.split('/').slice(-2)[0];
+        console.log('[Mock] Device richiesto:', deviceName);
+
+        // Simula latency network
+        await new Promise(resolve => setTimeout(resolve, 300));
+
+        // Trova mock data corrispondente
+        const mockKey = Object.keys(MOCK_DATA).find(key =>
+          deviceName.toLowerCase().includes(key.toLowerCase()) ||
+          MOCK_DATA[key].name === deviceName
+        );
+
+        if (mockKey) {
+          console.log('[Mock] Ritorno dati per:', mockKey);
+          return Promise.resolve({
+            ok: true,
+            status: 200,
+            json: async () => MOCK_DATA[mockKey]
+          });
+        } else {
+          console.warn('[Mock] Device non trovato, ritorno 404');
+          return Promise.resolve({
+            ok: false,
+            status: 404,
+            statusText: 'Not Found',
+            json: async () => ({ error: 'Device not found' })
+          });
+        }
+      }
+
+      // Altre chiamate passano attraverso
+      return originalFetch(url, ...args);
+    };
+
+    // Test functions
+    function testSwitch() {
+      console.log('[Test] Apertura panel con dati Switch L3');
+      window.openDevicePanel('switch_l3');
+    }
+
+    function testRouter() {
+      console.log('[Test] Apertura panel con dati Router');
+      window.openDevicePanel('router');
+    }
+
+    function testAccessPoint() {
+      console.log('[Test] Apertura panel con dati Access Point');
+      window.openDevicePanel('ap');
+    }
+
+    function testMinimalData() {
+      console.log('[Test] Apertura panel con dati minimi');
+      window.openDevicePanel('minimal');
+    }
+
+    function testEmptyPorts() {
+      console.log('[Test] Apertura panel con porte vuote');
+      window.openDevicePanel('empty_ports');
+    }
+
+    function testErrorState() {
+      console.log('[Test] Simula errore 404');
+      window.openDevicePanel('device_inesistente_xyz');
+    }
+
+    // Log inizializzazione
+    console.log('%c[Device Panel Test] Ready!', 'color: #22c55e; font-weight: bold; font-size: 14px;');
+    console.log('Mock data caricato:', Object.keys(MOCK_DATA));
+  </script>
+
+  <!-- Carica device-panel.js DOPO il mock setup -->
+  <script src="device-panel.js"></script>
+</body>
+</html>

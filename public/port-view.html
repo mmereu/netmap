@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Port View - NetMap</title>
+  <style>
+    :root {
+      --bg-dark: #0d1117;
+      --bg-card: #161b22;
+      --bg-hover: #21262d;
+      --border: #30363d;
+      --text-primary: #c9d1d9;
+      --text-secondary: #8b949e;
+      --accent-green: #3fb950;
+      --accent-red: #f85149;
+      --accent-yellow: #d29922;
+      --accent-blue: #58a6ff;
+      --accent-purple: #a371f7;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .device-selector {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    select, input, button {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+    }
+    
+    button {
+      cursor: pointer;
+      background: var(--accent-blue);
+      border-color: var(--accent-blue);
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      filter: brightness(1.1);
+    }
+    
+    .device-info {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .info-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .info-value {
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .filter-group label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th {
+      background: var(--bg-hover);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    
+    th:hover { background: var(--border); }
+    
+    th.sorted::after {
+      content: ' ▲';
+      font-size: 10px;
+    }
+    
+    th.sorted.desc::after {
+      content: ' ▼';
+    }
+    
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    
+    tr:hover td { background: var(--bg-hover); }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .status-up {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--accent-green);
+    }
+    
+    .status-down {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--accent-red);
+    }
+    
+    .status-admin-down {
+      background: rgba(139, 148, 158, 0.15);
+      color: var(--text-secondary);
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    
+    .vlan-tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    
+    .vlan-tag {
+      background: rgba(163, 113, 247, 0.15);
+      color: var(--accent-purple);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: monospace;
+    }
+    
+    .vlan-tag.native {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent-blue);
+    }
+    
+    .speed-badge {
+      font-family: monospace;
+      color: var(--accent-yellow);
+    }
+    
+    .mac-count {
+      background: var(--bg-hover);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    
+    .poe-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .poe-delivering {
+      color: var(--accent-green);
+    }
+    
+    .poe-searching {
+      color: var(--accent-yellow);
+    }
+    
+    .poe-disabled {
+      color: var(--text-secondary);
+    }
+    
+    .stp-state {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    
+    .stp-forwarding {
+      background: rgba(63, 185, 80, 0.15);
+      color: var(--accent-green);
+    }
+    
+    .stp-blocking {
+      background: rgba(248, 81, 73, 0.15);
+      color: var(--accent-red);
+    }
+    
+    .stp-learning, .stp-listening {
+      background: rgba(210, 153, 34, 0.15);
+      color: var(--accent-yellow);
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-secondary);
+    }
+    
+    .loading::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: '.'; }
+      40% { content: '..'; }
+      60%, 100% { content: '...'; }
+    }
+    
+    .summary-bar {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 16px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .summary-count {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .summary-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    /* Visually hidden but accessible to screen readers */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+  </style>
+  <link rel="stylesheet" href="skeleton-loader.css">
+</head>
+<body>
+  <div class="container">
+    <header role="banner" aria-label="Intestazione Port View">
+      <h1>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <rect x="2" y="6" width="20" height="12" rx="2"/>
+          <line x1="6" y1="10" x2="6" y2="14"/>
+          <line x1="10" y1="10" x2="10" y2="14"/>
+          <line x1="14" y1="10" x2="14" y2="14"/>
+          <line x1="18" y1="10" x2="18" y2="14"/>
+        </svg>
+        Port View
+      </h1>
+      <section class="device-selector" aria-label="Selezione dispositivo">
+        <label for="deviceSelect" class="visually-hidden">Seleziona dispositivo di rete</label>
+        <select id="deviceSelect" aria-label="Seleziona dispositivo di rete">
+          <option value="">Seleziona device...</option>
+        </select>
+        <button onclick="loadPorts()">Carica</button>
+        <button onclick="refreshDevices()">↻ Refresh</button>
+      </section>
+    </header>
+
+    <section id="deviceInfo" class="device-info" style="display: none;" aria-label="Informazioni dispositivo">
+      <div class="info-item">
+        <span class="info-label">Hostname</span>
+        <span class="info-value" id="infoHostname">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">IP</span>
+        <span class="info-value" id="infoIP">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Vendor</span>
+        <span class="info-value" id="infoVendor">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Model</span>
+        <span class="info-value" id="infoModel">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">OS</span>
+        <span class="info-value" id="infoOS">-</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Uptime</span>
+        <span class="info-value" id="infoUptime">-</span>
+      </div>
+    </section>
+
+    <section class="filters" aria-label="Filtri porte">
+      <div class="filter-group">
+        <label for="filterStatus">Stato:</label>
+        <select id="filterStatus" aria-label="Filtra porte per stato">
+          <option value="">Tutti</option>
+          <option value="up">Up</option>
+          <option value="down">Down</option>
+          <option value="admin-down">Admin Down</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterVLAN">VLAN:</label>
+        <select id="filterVLAN" aria-label="Filtra porte per VLAN">
+          <option value="">Tutte</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="filterSearch">Cerca:</label>
+        <input type="text" id="filterSearch" placeholder="Nome porta, descrizione..." aria-label="Cerca porte per nome o descrizione">
+      </div>
+    </section>
+
+    <section id="summaryBar" class="summary-bar" style="display: none;" aria-label="Riepilogo stato porte">
+      <div class="summary-item">
+        <span class="summary-count status-up" id="countUp">0</span>
+        <span class="summary-label">Up</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-count status-down" id="countDown">0</span>
+        <span class="summary-label">Down</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-count" id="countTotal">0</span>
+        <span class="summary-label">Totale</span>
+      </div>
+      <div class="summary-item">
+        <span class="summary-count" id="countMAC">0</span>
+        <span class="summary-label">MAC appresi</span>
+      </div>
+    </section>
+
+    <main id="content" role="main" aria-label="Contenuto principale - Tabella porte">
+      <div class="empty-state">
+        <h3>Seleziona un device</h3>
+        <p>Scegli un device dal menu a tendina per visualizzare le sue porte</p>
+      </div>
+    </main>
+  </div>
+
+  <script src="skeleton-loader.js"></script>
+  <script>
+    let allPorts = [];
+    let allVLANs = new Set();
+    
+    async function refreshDevices() {
+      const select = document.getElementById('deviceSelect');
+      select.innerHTML = '<option value="">Caricamento...</option>';
+      
+      try {
+        const res = await fetch('/api/devices');
+        const data = await res.json();
+        
+        select.innerHTML = '<option value="">Seleziona device...</option>';
+        data.devices.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.ip;
+          opt.textContent = d.sysname ? `${d.sysname} (${d.ip})` : d.ip;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        select.innerHTML = '<option value="">Errore caricamento</option>';
+        console.error(err);
+      }
+    }
+    
+    async function loadPorts() {
+      const ip = document.getElementById('deviceSelect').value;
+      if (!ip) return;
+      
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">Caricamento porte</div>';
+      
+      try {
+        const res = await fetch(`/api/devices/${ip}`);
+        const data = await res.json();
+        
+        // Device info
+        const deviceInfo = document.getElementById('deviceInfo');
+        deviceInfo.style.display = 'grid';
+        document.getElementById('infoHostname').textContent = data.device.sysname || '-';
+        document.getElementById('infoIP').textContent = data.device.ip;
+        document.getElementById('infoVendor').textContent = data.device.vendor || '-';
+        document.getElementById('infoModel').textContent = data.device.model || '-';
+        document.getElementById('infoOS').textContent = data.device.os || '-';
+        document.getElementById('infoUptime').textContent = data.device.sysuptime 
+          ? formatUptime(data.device.sysuptime) : '-';
+        
+        // Carica statistiche porte
+        const statsRes = await fetch(`/api/devices/${ip}/port-stats`);
+        let portStats = [];
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          portStats = statsData.ports || [];
+        } else {
+          // Fallback: usa interfaces base
+          portStats = data.interfaces.map(i => ({
+            ...i,
+            vlans: [],
+            macCount: 0,
+            statusText: i.ifoperstatus === 1 ? 'up' : 'down',
+            speedMbps: i.ifspeed ? Math.round(i.ifspeed / 1000000) : null,
+          }));
+        }
+        
+        allPorts = portStats;
+        
+        // Raccogli VLAN uniche
+        allVLANs.clear();
+        portStats.forEach(p => {
+          (p.vlans || []).forEach(v => allVLANs.add(v.vlan_id));
+        });
+        updateVLANFilter();
+        
+        renderPorts(portStats);
+        updateSummary(portStats);
+        
+        document.getElementById('summaryBar').style.display = 'flex';
+      } catch (err) {
+        content.innerHTML = `<div class="empty-state"><h3>Errore</h3><p>${err.message}</p></div>`;
+        console.error(err);
+      }
+    }
+    
+    function updateVLANFilter() {
+      const select = document.getElementById('filterVLAN');
+      select.innerHTML = '<option value="">Tutte</option>';
+      Array.from(allVLANs).sort((a, b) => a - b).forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = v;
+        opt.textContent = `VLAN ${v}`;
+        select.appendChild(opt);
+      });
+    }
+    
+    function renderPorts(ports) {
+      const content = document.getElementById('content');
+      
+      if (ports.length === 0) {
+        content.innerHTML = '<div class="empty-state"><h3>Nessuna porta trovata</h3></div>';
+        return;
+      }
+      
+      let html = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th data-sort="ifindex">Index</th>
+                <th data-sort="ifname">Nome</th>
+                <th data-sort="ifdescr">Descrizione</th>
+                <th data-sort="statusText">Stato</th>
+                <th data-sort="speedMbps">Velocità</th>
+                <th>VLAN</th>
+                <th data-sort="macCount">MAC</th>
+                <th>STP</th>
+                <th>PoE</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      
+      ports.forEach(port => {
+        const status = getPortStatus(port);
+        const vlans = formatVLANs(port.vlans || []);
+        const speed = port.speedMbps ? `<span class="speed-badge">${formatSpeed(port.speedMbps)}</span>` : '-';
+        const stp = formatSTP(port.stpState);
+        const poe = formatPoE(port.poe);
+        
+        html += `
+          <tr>
+            <td>${port.ifindex || '-'}</td>
+            <td><strong>${port.ifname || port.ifdescr || '-'}</strong></td>
+            <td>${port.ifalias || port.ifdescr || '-'}</td>
+            <td>${status}</td>
+            <td>${speed}</td>
+            <td>${vlans}</td>
+            <td><span class="mac-count">${port.macCount || 0}</span></td>
+            <td>${stp}</td>
+            <td>${poe}</td>
+          </tr>
+        `;
+      });
+      
+      html += '</tbody></table></div>';
+      content.innerHTML = html;
+      
+      // Sort handlers
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.addEventListener('click', () => sortTable(th.dataset.sort));
+      });
+    }
+    
+    function getPortStatus(port) {
+      if (port.ifadminstatus === 2) {
+        return '<span class="status-badge status-admin-down"><span class="status-dot"></span>Admin Down</span>';
+      }
+      if (port.ifoperstatus === 1 || port.statusText === 'up') {
+        return '<span class="status-badge status-up"><span class="status-dot"></span>Up</span>';
+      }
+      return '<span class="status-badge status-down"><span class="status-dot"></span>Down</span>';
+    }
+    
+    function formatVLANs(vlans) {
+      if (!vlans || vlans.length === 0) return '-';
+      return vlans.map(v => {
+        const cls = v.tagged ? 'vlan-tag' : 'vlan-tag native';
+        return `<span class="${cls}">${v.vlan_id}</span>`;
+      }).join('');
+    }
+    
+    function formatSpeed(mbps) {
+      if (mbps >= 1000) return `${mbps / 1000}G`;
+      return `${mbps}M`;
+    }
+    
+    function formatSTP(state) {
+      if (!state) return '-';
+      const stateMap = {
+        1: { text: 'Disabled', cls: 'stp-disabled' },
+        2: { text: 'Blocking', cls: 'stp-blocking' },
+        3: { text: 'Listening', cls: 'stp-listening' },
+        4: { text: 'Learning', cls: 'stp-learning' },
+        5: { text: 'Forwarding', cls: 'stp-forwarding' },
+        6: { text: 'Broken', cls: 'stp-blocking' },
+      };
+      const s = stateMap[state] || { text: 'Unknown', cls: '' };
+      return `<span class="stp-state ${s.cls}">${s.text}</span>`;
+    }
+    
+    function formatPoE(poe) {
+      if (!poe) return '-';
+      if (poe.delivering) {
+        return `<span class="poe-status poe-delivering">● ${poe.power_used || 0}W</span>`;
+      }
+      if (poe.detection_status === 2) {
+        return '<span class="poe-status poe-searching">○ Searching</span>';
+      }
+      return '<span class="poe-status poe-disabled">○ Off</span>';
+    }
+    
+    function formatUptime(ticks) {
+      const seconds = Math.floor(ticks / 100);
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      return `${days}d ${hours}h ${mins}m`;
+    }
+    
+    function updateSummary(ports) {
+      const up = ports.filter(p => p.ifoperstatus === 1 || p.statusText === 'up').length;
+      const down = ports.filter(p => p.ifoperstatus !== 1 && p.statusText !== 'up').length;
+      const totalMAC = ports.reduce((sum, p) => sum + (p.macCount || 0), 0);
+      
+      document.getElementById('countUp').textContent = up;
+      document.getElementById('countDown').textContent = down;
+      document.getElementById('countTotal').textContent = ports.length;
+      document.getElementById('countMAC').textContent = totalMAC;
+    }
+    
+    let sortColumn = null;
+    let sortDesc = false;
+    
+    function sortTable(column) {
+      if (sortColumn === column) {
+        sortDesc = !sortDesc;
+      } else {
+        sortColumn = column;
+        sortDesc = false;
+      }
+      
+      const sorted = [...allPorts].sort((a, b) => {
+        let va = a[column];
+        let vb = b[column];
+        if (va == null) va = '';
+        if (vb == null) vb = '';
+        if (typeof va === 'number' && typeof vb === 'number') {
+          return sortDesc ? vb - va : va - vb;
+        }
+        return sortDesc ? String(vb).localeCompare(String(va)) : String(va).localeCompare(String(vb));
+      });
+      
+      renderPorts(sorted);
+      
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.classList.remove('sorted', 'desc');
+        if (th.dataset.sort === column) {
+          th.classList.add('sorted');
+          if (sortDesc) th.classList.add('desc');
+        }
+      });
+    }
+    
+    function applyFilters() {
+      const status = document.getElementById('filterStatus').value;
+      const vlan = document.getElementById('filterVLAN').value;
+      const search = document.getElementById('filterSearch').value.toLowerCase();
+      
+      let filtered = allPorts;
+      
+      if (status) {
+        filtered = filtered.filter(p => {
+          if (status === 'up') return p.ifoperstatus === 1 || p.statusText === 'up';
+          if (status === 'down') return p.ifoperstatus !== 1 && p.statusText !== 'up' && p.ifadminstatus !== 2;
+          if (status === 'admin-down') return p.ifadminstatus === 2;
+          return true;
+        });
+      }
+      
+      if (vlan) {
+        filtered = filtered.filter(p => 
+          (p.vlans || []).some(v => v.vlan_id == vlan)
+        );
+      }
+      
+      if (search) {
+        filtered = filtered.filter(p => 
+          (p.ifname || '').toLowerCase().includes(search) ||
+          (p.ifdescr || '').toLowerCase().includes(search) ||
+          (p.ifalias || '').toLowerCase().includes(search)
+        );
+      }
+      
+      renderPorts(filtered);
+      updateSummary(filtered);
+    }
+    
+    // Event listeners
+    document.getElementById('filterStatus').addEventListener('change', applyFilters);
+    document.getElementById('filterVLAN').addEventListener('change', applyFilters);
+    document.getElementById('filterSearch').addEventListener('input', applyFilters);
+    
+    // Init
+    refreshDevices();
+  </script>
+</body>
+</html>
+
+
+

@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetMap - MAC Tracker v3</title>
+
+  <!-- Base Theme -->
+  <link rel="stylesheet" href="design-system.css">
+  <link rel="stylesheet" href="discovery-industrial.css">
+
+  <style>
+    /* MAC Tracker V3 Specific Styles */
+    :root {
+      --cache-fresh: #00ff88;
+      --cache-stale: #ffb000;
+      --cache-old: #ff3366;
+      --ssh-live: #00d4ff;
+    }
+
+    .tracker-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Search Section */
+    .search-hero {
+      background: linear-gradient(135deg, rgba(0,212,255,0.1), rgba(0,255,136,0.05));
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .search-hero h1 {
+      font-family: 'Orbitron', monospace;
+      font-size: 1.5rem;
+      color: var(--cyan, #00d4ff);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .search-hero h1::before {
+      content: "V3";
+      background: var(--cache-fresh);
+      color: #0a0e12;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .search-input-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-input-group label {
+      display: block;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .mac-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(0,212,255,0.3);
+      border-radius: 6px;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .mac-input:focus {
+      outline: none;
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px rgba(0,212,255,0.3);
+    }
+
+    .btn-search {
+      padding: 0.75rem 2rem;
+      background: linear-gradient(135deg, #00d4ff, #00ff88);
+      border: none;
+      border-radius: 6px;
+      color: #0a0e12;
+      font-family: 'Orbitron', monospace;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-search:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0,212,255,0.4);
+    }
+
+    .btn-search:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Cache Status Bar */
+    .cache-status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      background: rgba(0,0,0,0.3);
+      border-radius: 6px;
+      margin-top: 1rem;
+      font-size: 0.85rem;
+    }
+
+    .cache-info {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .cache-stat {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cache-stat .label {
+      color: rgba(255,255,255,0.5);
+    }
+
+    .cache-stat .value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--cache-fresh);
+    }
+
+    .cache-stat .value.stale {
+      color: var(--cache-stale);
+    }
+
+    .cache-stat .value.old {
+      color: var(--cache-old);
+    }
+
+    .btn-sync {
+      padding: 0.4rem 1rem;
+      background: transparent;
+      border: 1px solid rgba(0,212,255,0.5);
+      border-radius: 4px;
+      color: var(--cyan);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-sync:hover {
+      background: rgba(0,212,255,0.1);
+    }
+
+    /* Results Section */
+    .results-section {
+      display: none;
+    }
+
+    .results-section.visible {
+      display: block;
+    }
+
+    .result-card {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(0,212,255,0.2);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      background: rgba(0,212,255,0.1);
+      border-bottom: 1px solid rgba(0,212,255,0.2);
+    }
+
+    .result-mac {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.3rem;
+      color: #fff;
+      letter-spacing: 2px;
+    }
+
+    .result-badges {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+
+    .badge.cache {
+      background: rgba(0,255,136,0.2);
+      color: var(--cache-fresh);
+      border: 1px solid var(--cache-fresh);
+    }
+
+    .badge.stale {
+      background: rgba(255,176,0,0.2);
+      color: var(--cache-stale);
+      border: 1px solid var(--cache-stale);
+    }
+
+    .badge.ssh {
+      background: rgba(0,212,255,0.2);
+      color: var(--ssh-live);
+      border: 1px solid var(--ssh-live);
+    }
+
+    .result-body {
+      padding: 1.5rem;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .result-section {
+      background: rgba(0,0,0,0.2);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .result-section h4 {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .result-row:last-child {
+      border-bottom: none;
+    }
+
+    .result-label {
+      color: rgba(255,255,255,0.6);
+      font-size: 0.85rem;
+    }
+
+    .result-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: #fff;
+    }
+
+    .result-value.highlight {
+      color: var(--cyan);
+    }
+
+    .result-value.success {
+      color: var(--cache-fresh);
+    }
+
+    /* Live Refresh Button */
+    .result-actions {
+      display: flex;
+      justify-content: center;
+      padding: 1rem;
+      border-top: 1px solid rgba(0,212,255,0.2);
+    }
+
+    .btn-refresh {
+      padding: 0.75rem 2rem;
+      background: transparent;
+      border: 2px solid var(--ssh-live);
+      border-radius: 6px;
+      color: var(--ssh-live);
+      font-family: 'Orbitron', monospace;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .btn-refresh:hover {
+      background: rgba(0,212,255,0.1);
+      transform: translateY(-2px);
+    }
+
+    .btn-refresh:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-refresh.loading {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Not Found */
+    .not-found {
+      text-align: center;
+      padding: 3rem;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .not-found h3 {
+      color: var(--cache-old);
+      margin-bottom: 1rem;
+    }
+
+    /* Search Timer */
+    .search-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      color: var(--cache-fresh);
+      padding: 0.5rem 1rem;
+      background: rgba(0,255,136,0.1);
+      border-radius: 6px;
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 9999;
+    }
+
+    .toast {
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.success {
+      background: rgba(0,255,136,0.2);
+      border: 1px solid var(--cache-fresh);
+      color: var(--cache-fresh);
+    }
+
+    .toast.error {
+      background: rgba(255,51,102,0.2);
+      border: 1px solid var(--cache-old);
+      color: var(--cache-old);
+    }
+
+    .toast.info {
+      background: rgba(0,212,255,0.2);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* WebSocket Connection Status Indicator */
+    .ws-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(0,0,0,0.7);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      z-index: 9998;
+      transition: all 0.3s ease;
+    }
+
+    .ws-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+
+    .ws-status.connected .ws-status-dot {
+      background: var(--cache-fresh);
+      box-shadow: 0 0 6px var(--cache-fresh);
+    }
+
+    .ws-status.disconnected .ws-status-dot {
+      background: var(--cache-old);
+      box-shadow: 0 0 6px var(--cache-old);
+    }
+
+    .ws-status.reconnecting .ws-status-dot {
+      background: var(--cache-stale);
+      box-shadow: 0 0 6px var(--cache-stale);
+      animation: pulse 1s infinite;
+    }
+
+    .ws-status-text {
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .ws-status.connected .ws-status-text {
+      color: var(--cache-fresh);
+    }
+
+    .ws-status.disconnected .ws-status-text {
+      color: var(--cache-old);
+    }
+
+    .ws-status.reconnecting .ws-status-text {
+      color: var(--cache-stale);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .search-form {
+        flex-direction: column;
+      }
+
+      .search-input-group {
+        width: 100%;
+      }
+
+      .cache-status-bar {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .cache-info {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" role="banner">
+    <div class="navbar-brand">
+      <h1>NetMap</h1>
+      <span class="version">v3.0</span>
+    </div>
+    <nav class="navbar-nav" role="navigation">
+      <a href="discovery.html" class="nav-link">Discovery</a>
+      <a href="mac-tracker.html" class="nav-link">MAC v2</a>
+      <a href="mac-tracker-v3.html" class="nav-link active">MAC v3</a>
+      <a href="topology-nedi-layer.html" class="nav-link">Topology</a>
+    </nav>
+  </nav>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- WebSocket Connection Status Indicator -->
+  <div class="ws-status disconnected" id="wsStatus">
+    <span class="ws-status-dot"></span>
+    <span class="ws-status-text">Disconnected</span>
+  </div>
+
+  <!-- Main Content -->
+  <main class="tracker-container">
+
+    <!-- Search Hero -->
+    <section class="search-hero">
+      <h1>MAC Address Tracker</h1>
+
+      <div class="search-form">
+        <div class="search-input-group">
+          <label>MAC Address</label>
+          <input type="text"
+                 id="macInput"
+                 class="mac-input"
+                 placeholder="AA:BB:CC:DD:EE:FF"
+                 maxlength="17"
+                 autocomplete="off"
+                 spellcheck="false">
+        </div>
+
+        <button class="btn-search" id="btnSearch" onclick="searchMac()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          CERCA
+        </button>
+
+        <div class="search-timer" id="searchTimer">--</div>
+      </div>
+
+      <!-- Cache Status Bar -->
+      <div class="cache-status-bar">
+        <div class="cache-info">
+          <div class="cache-stat">
+            <span class="label">Cache:</span>
+            <span class="value" id="cacheSize">--</span>
+            <span class="label">MAC</span>
+          </div>
+          <div class="cache-stat">
+            <span class="label">Ultimo sync:</span>
+            <span class="value" id="cacheAge">--</span>
+          </div>
+          <div class="cache-stat">
+            <span class="label">Switches:</span>
+            <span class="value" id="cacheSwitches">--</span>
+          </div>
+        </div>
+        <button class="btn-sync" id="btnSync" onclick="forceSync()">
+          Forza Sync NeDi
+        </button>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section" id="resultsSection">
+      <div class="result-card" id="resultCard">
+        <!-- Populated by JavaScript -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Socket.IO Client Library (auto-served by Socket.IO server) -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    // =========================================================================
+    // MAC-TRACKER V3 - Frontend JavaScript
+    // =========================================================================
+
+    const API_BASE = '/api/v3/mac';
+
+    // =========================================================================
+    // WebSocket Connection (Socket.IO)
+    // =========================================================================
+    const socket = io({
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity
+    });
+
+    // =========================================================================
+    // Connection Status Management
+    // =========================================================================
+    let pollingIntervalId = null;
+    const POLLING_INTERVAL_MS = 30000; // 30 seconds fallback polling
+
+    /**
+     * Update WebSocket connection status indicator
+     * @param {string} status - 'connected', 'disconnected', or 'reconnecting'
+     */
+    function updateConnectionStatus(status) {
+      const wsStatus = document.getElementById('wsStatus');
+      const wsStatusText = wsStatus.querySelector('.ws-status-text');
+
+      // Remove all status classes
+      wsStatus.classList.remove('connected', 'disconnected', 'reconnecting');
+
+      // Add appropriate class and update text
+      wsStatus.classList.add(status);
+      switch (status) {
+        case 'connected':
+          wsStatusText.textContent = 'Live';
+          break;
+        case 'disconnected':
+          wsStatusText.textContent = 'Offline';
+          break;
+        case 'reconnecting':
+          wsStatusText.textContent = 'Reconnecting...';
+          break;
+      }
+    }
+
+    /**
+     * Start polling fallback when WebSocket is disconnected
+     */
+    function startPollingFallback() {
+      if (pollingIntervalId !== null) return; // Already polling
+      pollingIntervalId = setInterval(loadCacheStatus, POLLING_INTERVAL_MS);
+    }
+
+    /**
+     * Stop polling fallback when WebSocket reconnects
+     */
+    function stopPollingFallback() {
+      if (pollingIntervalId !== null) {
+        clearInterval(pollingIntervalId);
+        pollingIntervalId = null;
+      }
+    }
+
+    // WebSocket connection event handlers
+    socket.on('connect', () => {
+      updateConnectionStatus('connected');
+      stopPollingFallback();
+      // Refresh cache status on reconnect to get latest data
+      loadCacheStatus();
+    });
+
+    socket.on('disconnect', (reason) => {
+      updateConnectionStatus('disconnected');
+      startPollingFallback();
+      if (reason === 'io server disconnect') {
+        // Server initiated disconnect, manually reconnect
+        socket.connect();
+      }
+    });
+
+    socket.on('reconnecting', (attemptNumber) => {
+      updateConnectionStatus('reconnecting');
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+      updateConnectionStatus('connected');
+      stopPollingFallback();
+      // Refresh cache status after reconnecting
+      loadCacheStatus();
+    });
+
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      updateConnectionStatus('reconnecting');
+    });
+
+    socket.on('connect_error', (error) => {
+      updateConnectionStatus('disconnected');
+      startPollingFallback();
+    });
+
+    // =========================================================================
+    // Cache Status WebSocket Listener
+    // =========================================================================
+    socket.on('cache-status', (data) => {
+      // Update cache status UI from WebSocket event
+      updateCacheStatusUI(data);
+    });
+
+    /**
+     * Update cache status UI from WebSocket event data
+     * @param {Object} data - Cache status data from server
+     */
+    function updateCacheStatusUI(data) {
+      // Extract cache stats from WebSocket event payload
+      // The server sends: { ...macCacheV3.getStats(), syncResult, timestamp }
+      const totalMacs = data.totalMacs;
+      const cacheAgeStr = data.cacheAge;
+      const totalSwitchesCount = data.totalSwitches;
+      const isStale = data.isStale;
+
+      // Update DOM elements
+      if (totalMacs !== undefined) {
+        cacheSize.textContent = totalMacs.toLocaleString();
+      }
+      if (cacheAgeStr !== undefined) {
+        cacheAge.textContent = cacheAgeStr;
+      }
+      if (totalSwitchesCount !== undefined) {
+        cacheSwitches.textContent = totalSwitchesCount;
+      }
+
+      // Update color based on cache staleness
+      const ageEl = document.getElementById('cacheAge');
+      if (isStale) {
+        ageEl.classList.add('stale');
+        ageEl.classList.remove('old');
+      } else if (cacheAgeStr === 'never synced') {
+        ageEl.classList.add('old');
+        ageEl.classList.remove('stale');
+      } else {
+        ageEl.classList.remove('stale', 'old');
+      }
+    }
+
+    // DOM Elements
+    const macInput = document.getElementById('macInput');
+    const btnSearch = document.getElementById('btnSearch');
+    const searchTimer = document.getElementById('searchTimer');
+    const resultsSection = document.getElementById('resultsSection');
+    const resultCard = document.getElementById('resultCard');
+    const cacheSize = document.getElementById('cacheSize');
+    const cacheAge = document.getElementById('cacheAge');
+    const cacheSwitches = document.getElementById('cacheSwitches');
+
+    // =========================================================================
+    // MAC Input Auto-Format
+    // =========================================================================
+    macInput.addEventListener('input', (e) => {
+      let value = e.target.value.replace(/[^a-fA-F0-9]/g, '').toUpperCase();
+
+      // Auto-insert colons
+      if (value.length > 2) {
+        value = value.match(/.{1,2}/g).join(':');
+      }
+
+      // Limit to 17 chars (12 hex + 5 colons)
+      e.target.value = value.substring(0, 17);
+    });
+
+    // Enter key triggers search
+    macInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        searchMac();
+      }
+    });
+
+    // =========================================================================
+    // Search MAC
+    // =========================================================================
+    async function searchMac() {
+      const mac = macInput.value.trim();
+
+      if (!mac || mac.length < 12) {
+        showToast('Inserisci un MAC address valido', 'error');
+        return;
+      }
+
+      btnSearch.disabled = true;
+      searchTimer.textContent = '...';
+
+      try {
+        const t0 = performance.now();
+        const response = await fetch(`${API_BASE}/${encodeURIComponent(mac)}`);
+        const data = await response.json();
+        const elapsed = (performance.now() - t0).toFixed(1);
+
+        searchTimer.textContent = `${elapsed}ms`;
+
+        if (data.found) {
+          showResult(data);
+        } else {
+          showNotFound(mac, data);
+        }
+
+        resultsSection.classList.add('visible');
+
+      } catch (err) {
+        console.error('Search error:', err);
+        showToast(`Errore: ${err.message}`, 'error');
+        searchTimer.textContent = 'ERR';
+
+      } finally {
+        btnSearch.disabled = false;
+      }
+    }
+
+    // =========================================================================
+    // Show Result
+    // =========================================================================
+    function showResult(data) {
+      const isStale = data.cacheAge && data.cacheAge.includes('min') &&
+                      parseInt(data.cacheAge) > 20;
+      const staleClass = isStale ? 'stale' : '';
+
+      resultCard.innerHTML = `
+        <div class="result-header">
+          <span class="result-mac">${data.mac}</span>
+          <div class="result-badges">
+            <span class="badge cache ${staleClass}">${data.cacheAge}</span>
+            ${data.liveVerified ? '<span class="badge ssh">SSH Verified</span>' : ''}
+          </div>
+        </div>
+
+        <div class="result-body">
+          <div class="result-grid">
+
+            <!-- Endpoint Section -->
+            <div class="result-section">
+              <h4><span>&#128205;</span> Posizione</h4>
+              <div class="result-row">
+                <span class="result-label">Switch</span>
+                <span class="result-value highlight">${data.endpoint?.switch || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">IP Switch</span>
+                <span class="result-value">${data.endpoint?.switchIp || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Porta</span>
+                <span class="result-value highlight">${data.endpoint?.port || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">VLAN</span>
+                <span class="result-value">${data.endpoint?.vlan || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Tipo</span>
+                <span class="result-value">${data.endpoint?.portType || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Source</span>
+                <span class="result-value ${data.endpoint?.source === 'ssh' ? 'success' : ''}">${data.endpoint?.source || 'cache'}</span>
+              </div>
+            </div>
+
+            <!-- Network Info Section -->
+            <div class="result-section">
+              <h4><span>&#127760;</span> Network Info</h4>
+              <div class="result-row">
+                <span class="result-label">IP Address</span>
+                <span class="result-value">${data.ip || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Hostname</span>
+                <span class="result-value">${data.hostname || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Vendor</span>
+                <span class="result-value">${data.vendor || '--'}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Last Seen</span>
+                <span class="result-value">${formatTimestamp(data.lastSeen)}</span>
+              </div>
+              <div class="result-row">
+                <span class="result-label">Search Time</span>
+                <span class="result-value success">${data.searchTime}ms</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn-refresh" onclick="refreshMac('${data.mac}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M23 4v6h-6"/>
+              <path d="M1 20v-6h6"/>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+            </svg>
+            VERIFICA LIVE (SSH)
+          </button>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // Show Not Found
+    // =========================================================================
+    function showNotFound(mac, data) {
+      resultCard.innerHTML = `
+        <div class="not-found">
+          <h3>MAC Non Trovato in Cache</h3>
+          <p>Il MAC <strong>${mac}</strong> non è presente nella cache NeDi (${data.cacheAge}).</p>
+          <p style="margin-top: 1rem; font-size: 0.9rem; color: rgba(255,255,255,0.6);">
+            Il MAC potrebbe essere su un dispositivo non ancora sincronizzato.
+          </p>
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+            <button class="btn-refresh" onclick="searchWithV2('${mac}')" style="background: linear-gradient(135deg, #ff6b00 0%, #ff9500 100%); border-color: #ff6b00;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <circle cx="11" cy="11" r="8"/>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+              </svg>
+              CERCA CON SSH (V2)
+            </button>
+            <button class="btn-refresh" onclick="forceSync()" style="background: transparent;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <path d="M23 4v6h-6"/>
+                <path d="M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              SYNC NEDI
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Redirect to MAC Tracker V2 for SSH search
+    function searchWithV2(mac) {
+      window.location.href = `/mac-tracker.html?mac=${encodeURIComponent(mac)}&autoSearch=true`;
+    }
+
+    // =========================================================================
+    // Refresh MAC via SSH
+    // =========================================================================
+    async function refreshMac(mac) {
+      const btn = document.querySelector('.btn-refresh');
+      if (btn) {
+        btn.disabled = true;
+        btn.classList.add('loading');
+        btn.innerHTML = `
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" class="spinning">
+            <path d="M23 4v6h-6"/>
+            <path d="M1 20v-6h6"/>
+          </svg>
+          SSH IN CORSO...
+        `;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE}/${encodeURIComponent(mac)}/refresh`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(`Refresh completato: ${data.endpoint?.port || 'OK'}`, 'success');
+          // Re-fetch and show updated data
+          await searchMac();
+        } else {
+          showToast(data.message || data.error || 'Refresh fallito', 'error');
+        }
+
+      } catch (err) {
+        console.error('Refresh error:', err);
+        showToast(`Errore SSH: ${err.message}`, 'error');
+
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.classList.remove('loading');
+          btn.innerHTML = `
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+              <path d="M23 4v6h-6"/>
+              <path d="M1 20v-6h6"/>
+            </svg>
+            VERIFICA LIVE (SSH)
+          `;
+        }
+      }
+    }
+
+    // =========================================================================
+    // Force Sync
+    // =========================================================================
+    async function forceSync() {
+      const btn = document.getElementById('btnSync');
+      btn.disabled = true;
+      btn.textContent = 'Sync in corso...';
+
+      try {
+        const response = await fetch(`${API_BASE}/sync`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.success) {
+          showToast(`Sync completato: ${data.entries} MAC in ${data.duration}ms`, 'success');
+          loadCacheStatus();
+        } else {
+          showToast(data.error || 'Sync fallito', 'error');
+        }
+
+      } catch (err) {
+        console.error('Sync error:', err);
+        showToast(`Errore sync: ${err.message}`, 'error');
+
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Forza Sync NeDi';
+      }
+    }
+
+    // =========================================================================
+    // Load Cache Status
+    // =========================================================================
+    async function loadCacheStatus() {
+      try {
+        const response = await fetch(`${API_BASE}/status`);
+        const data = await response.json();
+
+        if (data.cache) {
+          cacheSize.textContent = data.cache.totalMacs?.toLocaleString() || '--';
+          cacheAge.textContent = data.cache.cacheAge || '--';
+          cacheSwitches.textContent = data.cache.totalSwitches || '--';
+
+          // Color based on age
+          const ageEl = document.getElementById('cacheAge');
+          if (data.cache.isStale) {
+            ageEl.classList.add('stale');
+            ageEl.classList.remove('old');
+          } else if (data.cache.cacheAge === 'never synced') {
+            ageEl.classList.add('old');
+            ageEl.classList.remove('stale');
+          } else {
+            ageEl.classList.remove('stale', 'old');
+          }
+        }
+
+      } catch (err) {
+        console.error('Status error:', err);
+        cacheSize.textContent = 'ERR';
+        cacheAge.textContent = 'ERR';
+      }
+    }
+
+    // =========================================================================
+    // Utilities
+    // =========================================================================
+    function formatTimestamp(ts) {
+      if (!ts) return '--';
+      const date = new Date(ts * 1000);
+      return date.toLocaleString('it-IT');
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 4000);
+    }
+
+    // =========================================================================
+    // Init
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // Load cache status on initial page load
+      loadCacheStatus();
+
+      // Cache status now updates via WebSocket (socket.on('cache-status'))
+      // No polling interval needed - updates are pushed in real-time
+
+      // Focus input
+      macInput.focus();
+    });
+  </script>
+</body>
+</html>

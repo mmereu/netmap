@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetMap - Admin Panel</title>
+
+  <style>
+    :root {
+      --bg-dark: #0b1021;
+      --bg-card: #111a31;
+      --bg-card-hover: #1a2332;
+      --bg-input: #0f162b;
+      --border: #1f2a48;
+      --border-focus: #4b6fff;
+      --text-primary: #e4e7ef;
+      --text-secondary: #9fb3ff;
+      --text-muted: #6b7280;
+      --accent-blue: #4b6fff;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-yellow: #fbbf24;
+      --accent-purple: #a855f7;
+      --accent-cyan: #06b6d4;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Navigation */
+    .navbar {
+      background: rgba(17, 26, 49, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .navbar-brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 12px;
+    }
+
+    .tab-btn {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
+      transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #5d7bff;
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .btn-danger {
+      background: var(--accent-red);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(75, 111, 255, 0.1);
+    }
+
+    /* Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    /* Site Card */
+    .site-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 16px;
+      background: var(--bg-input);
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .site-info h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .site-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .site-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+    }
+
+    .stat-value {
+      font-weight: 600;
+      color: var(--accent-cyan);
+    }
+
+    /* Rules List */
+    .rules-list {
+      margin-top: 12px;
+    }
+
+    .rule-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: var(--bg-dark);
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .rule-type {
+      padding: 2px 8px;
+      background: var(--accent-purple);
+      color: white;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .rule-value {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent-cyan);
+    }
+
+    .rule-priority {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-size: 11px;
+    }
+
+    /* Badge */
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .badge-info {
+      background: rgba(75, 111, 255, 0.2);
+      color: var(--accent-blue);
+    }
+
+    .badge-warning {
+      background: rgba(251, 191, 36, 0.2);
+      color: var(--accent-yellow);
+    }
+
+    .badge-success {
+      background: rgba(34, 197, 94, 0.2);
+      color: var(--accent-green);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+
+    .alert-success {
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid var(--accent-red);
+      color: var(--accent-red);
+    }
+
+    /* Grid */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-state h3 {
+      margin-bottom: 8px;
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-brand">
+      <h1>NetMap</h1>
+    </div>
+    <div class="navbar-nav">
+      <a href="/discovery.html" class="nav-link">Discovery</a>
+      <a href="/topology-nedi-layer.html" class="nav-link">Topology</a>
+      <a href="/mac-tracker.html" class="nav-link">MAC Tracker</a>
+      <a href="/admin.html" class="nav-link active">Admin</a>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">Admin Panel</h1>
+    </div>
+
+    <!-- Alert container -->
+    <div id="alertContainer"></div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="sites">Sites</button>
+      <button class="tab-btn" data-tab="users">Users</button>
+      <button class="tab-btn" data-tab="preview">Preview Assignments</button>
+    </div>
+
+    <!-- Sites Tab -->
+    <div id="sites-tab" class="tab-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Gestione Siti</h2>
+          <button class="btn btn-primary" onclick="showCreateSiteModal()">
+            + Nuovo Sito
+          </button>
+        </div>
+
+        <div id="sitesList">
+          <div class="empty-state">
+            <h3>Caricamento...</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Unassigned Devices -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Device Non Assegnati</h2>
+          <button class="btn btn-success" onclick="reassignAllDevices()">
+            Ricalcola Assegnazioni
+          </button>
+        </div>
+        <div id="unassignedDevices">
+          <div class="empty-state">
+            <h3>Caricamento...</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users-tab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Gestione Utenti</h2>
+        </div>
+
+        <div id="usersList">
+          <div class="empty-state">
+            <h3>Caricamento...</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview Tab -->
+    <div id="preview-tab" class="tab-content">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Preview Assegnazioni</h2>
+          <button class="btn btn-secondary" onclick="loadPreview()">
+            Aggiorna Preview
+          </button>
+        </div>
+
+        <div id="previewStats" class="grid-2" style="margin-bottom: 20px;">
+          <!-- Stats will be loaded here -->
+        </div>
+
+        <div class="table-container">
+          <table id="previewTable">
+            <thead>
+              <tr>
+                <th>Device</th>
+                <th>IP</th>
+                <th>Sito Attuale</th>
+                <th>Sito Calcolato</th>
+                <th>Regola Match</th>
+              </tr>
+            </thead>
+            <tbody id="previewBody">
+              <tr>
+                <td colspan="5" class="empty-state">Caricamento...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Site Modal -->
+  <div id="siteModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="siteModalTitle">Nuovo Sito</h2>
+        <button class="modal-close" onclick="closeSiteModal()">&times;</button>
+      </div>
+
+      <form id="siteForm" onsubmit="saveSite(event)">
+        <input type="hidden" id="siteId">
+
+        <div class="form-group">
+          <label class="form-label">Nome Sito *</label>
+          <input type="text" id="siteName" class="form-input" required placeholder="es. PDV_Milano">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrizione</label>
+          <input type="text" id="siteDescription" class="form-input" placeholder="Descrizione opzionale">
+        </div>
+
+        <div id="rulesContainer">
+          <div class="form-group">
+            <label class="form-label">Regole di Matching</label>
+            <div id="rulesList"></div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addRuleRow()" style="margin-top: 8px;">
+              + Aggiungi Regola
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeSiteModal()">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- User Sites Modal -->
+  <div id="userSitesModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">Assegna Siti a <span id="userSitesUsername"></span></h2>
+        <button class="modal-close" onclick="closeUserSitesModal()">&times;</button>
+      </div>
+
+      <form id="userSitesForm" onsubmit="saveUserSites(event)">
+        <input type="hidden" id="userSitesUserId">
+
+        <div class="form-group">
+          <label class="form-label">Siti Assegnati</label>
+          <p class="form-hint" style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">
+            Se nessun sito viene selezionato, l'utente ha accesso globale.
+          </p>
+          <div id="userSitesCheckboxes"></div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeUserSitesModal()">Annulla</button>
+          <button type="submit" class="btn btn-primary">Salva</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let sites = [];
+    let users = [];
+    let editingRules = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSites();
+      loadUnassignedDevices();
+      loadUsers();
+
+      // Tab switching
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
+
+          // Load preview when tab is opened
+          if (btn.dataset.tab === 'preview') {
+            loadPreview();
+          }
+        });
+      });
+    });
+
+    // Alert helper
+    function showAlert(message, type = 'success') {
+      const container = document.getElementById('alertContainer');
+      container.innerHTML = `
+        <div class="alert alert-${type}">
+          ${message}
+        </div>
+      `;
+      setTimeout(() => container.innerHTML = '', 5000);
+    }
+
+    // API helpers
+    async function api(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+        body: options.body ? JSON.stringify(options.body) : undefined
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(error.error || 'Errore API');
+      }
+
+      return response.json();
+    }
+
+    // Load Sites
+    async function loadSites() {
+      try {
+        sites = await api('/api/admin/sites');
+        renderSites();
+      } catch (err) {
+        document.getElementById('sitesList').innerHTML = `
+          <div class="empty-state">
+            <h3>Errore caricamento siti</h3>
+            <p>${err.message}</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderSites() {
+      const container = document.getElementById('sitesList');
+
+      if (sites.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>Nessun sito configurato</h3>
+            <p>Crea il primo sito per iniziare</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = sites.map(site => `
+        <div class="site-card">
+          <div class="site-info">
+            <h3>${site.name}</h3>
+            ${site.description ? `<p class="site-meta">${site.description}</p>` : ''}
+            <div class="site-stats">
+              <span class="stat">
+                <span class="stat-value">${site.device_count || 0}</span> devices
+              </span>
+              <span class="stat">
+                <span class="stat-value">${site.user_count || 0}</span> users
+              </span>
+            </div>
+          </div>
+          <div>
+            <button class="btn btn-secondary btn-sm" onclick="editSite(${site.id})">Modifica</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteSite(${site.id}, '${site.name}')">Elimina</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Load Unassigned Devices
+    async function loadUnassignedDevices() {
+      try {
+        const result = await api('/api/admin/sites/unassigned');
+        const container = document.getElementById('unassignedDevices');
+
+        if (result.count === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <h3>Tutti i device sono assegnati</h3>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <p style="margin-bottom: 12px;">
+            <span class="badge badge-warning">${result.count} device</span> non hanno un sito assegnato
+          </p>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>IP</th>
+                  <th>Sysname</th>
+                  <th>Syslocation</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${result.devices.slice(0, 20).map(d => `
+                  <tr>
+                    <td>${d.ip}</td>
+                    <td>${d.sysname || '-'}</td>
+                    <td>${d.syslocation || '-'}</td>
+                  </tr>
+                `).join('')}
+                ${result.count > 20 ? `
+                  <tr>
+                    <td colspan="3" style="text-align: center; color: var(--text-muted);">
+                      ... e altri ${result.count - 20} device
+                    </td>
+                  </tr>
+                ` : ''}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } catch (err) {
+        console.error('Errore caricamento unassigned:', err);
+      }
+    }
+
+    // Reassign all devices
+    async function reassignAllDevices() {
+      if (!confirm('Ricalcolare le assegnazioni per tutti i device?')) return;
+
+      try {
+        const result = await api('/api/admin/sites/reassign', { method: 'POST' });
+        showAlert(`Assegnazioni ricalcolate: ${result.stats.assigned} assegnati, ${result.stats.unassigned} non assegnati`);
+        loadSites();
+        loadUnassignedDevices();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    // Site Modal
+    function showCreateSiteModal() {
+      document.getElementById('siteModalTitle').textContent = 'Nuovo Sito';
+      document.getElementById('siteId').value = '';
+      document.getElementById('siteName').value = '';
+      document.getElementById('siteDescription').value = '';
+      editingRules = [];
+      renderRules();
+      document.getElementById('siteModal').classList.add('active');
+    }
+
+    async function editSite(id) {
+      try {
+        const site = await api(`/api/admin/sites/${id}`);
+        document.getElementById('siteModalTitle').textContent = 'Modifica Sito';
+        document.getElementById('siteId').value = site.id;
+        document.getElementById('siteName').value = site.name;
+        document.getElementById('siteDescription').value = site.description || '';
+        editingRules = site.rules || [];
+        renderRules();
+        document.getElementById('siteModal').classList.add('active');
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    function closeSiteModal() {
+      document.getElementById('siteModal').classList.remove('active');
+    }
+
+    function renderRules() {
+      const container = document.getElementById('rulesList');
+      container.innerHTML = editingRules.map((rule, idx) => `
+        <div class="rule-item">
+          <select class="form-select" style="width: 140px;" data-idx="${idx}" onchange="updateRule(${idx}, 'rule_type', this.value)">
+            <option value="cidr" ${rule.rule_type === 'cidr' ? 'selected' : ''}>CIDR</option>
+            <option value="ip_range" ${rule.rule_type === 'ip_range' ? 'selected' : ''}>IP Range</option>
+            <option value="pattern" ${rule.rule_type === 'pattern' ? 'selected' : ''}>Pattern Location</option>
+            <option value="sysname_pattern" ${rule.rule_type === 'sysname_pattern' ? 'selected' : ''}>Pattern Sysname</option>
+          </select>
+          <input type="text" class="form-input" style="flex: 1;" value="${rule.rule_value}"
+                 placeholder="${getPlaceholder(rule.rule_type)}"
+                 onchange="updateRule(${idx}, 'rule_value', this.value)">
+          <input type="number" class="form-input" style="width: 80px;" value="${rule.priority || 0}"
+                 placeholder="Priorita" title="Priorita (piu alto = prima)"
+                 onchange="updateRule(${idx}, 'priority', parseInt(this.value))">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeRule(${idx})">X</button>
+        </div>
+      `).join('') || '<p style="color: var(--text-muted); font-size: 13px;">Nessuna regola configurata</p>';
+    }
+
+    function getPlaceholder(type) {
+      switch (type) {
+        case 'cidr': return '10.1.0.0/16';
+        case 'ip_range': return '10.1.0.1-10.1.255.254';
+        case 'pattern': return 'Milano%';
+        case 'sysname_pattern': return 'PDV-MI-%';
+        default: return '';
+      }
+    }
+
+    function addRuleRow() {
+      editingRules.push({ rule_type: 'cidr', rule_value: '', priority: 0 });
+      renderRules();
+    }
+
+    function updateRule(idx, field, value) {
+      editingRules[idx][field] = value;
+    }
+
+    function removeRule(idx) {
+      editingRules.splice(idx, 1);
+      renderRules();
+    }
+
+    async function saveSite(event) {
+      event.preventDefault();
+
+      const id = document.getElementById('siteId').value;
+      const name = document.getElementById('siteName').value;
+      const description = document.getElementById('siteDescription').value;
+
+      try {
+        if (id) {
+          // Update site
+          await api(`/api/admin/sites/${id}`, {
+            method: 'PUT',
+            body: { name, description }
+          });
+
+          // Update rules - delete existing and create new
+          const existingSite = await api(`/api/admin/sites/${id}`);
+          for (const rule of existingSite.rules || []) {
+            await api(`/api/admin/sites/rules/${rule.id}`, { method: 'DELETE' });
+          }
+          for (const rule of editingRules) {
+            if (rule.rule_value) {
+              await api(`/api/admin/sites/${id}/rules`, {
+                method: 'POST',
+                body: rule
+              });
+            }
+          }
+        } else {
+          // Create site
+          const site = await api('/api/admin/sites', {
+            method: 'POST',
+            body: { name, description }
+          });
+
+          // Create rules
+          for (const rule of editingRules) {
+            if (rule.rule_value) {
+              await api(`/api/admin/sites/${site.id}/rules`, {
+                method: 'POST',
+                body: rule
+              });
+            }
+          }
+        }
+
+        showAlert('Sito salvato con successo');
+        closeSiteModal();
+        loadSites();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    async function deleteSite(id, name) {
+      if (!confirm(`Eliminare il sito "${name}"? I device verranno scollegati.`)) return;
+
+      try {
+        await api(`/api/admin/sites/${id}`, { method: 'DELETE' });
+        showAlert('Sito eliminato');
+        loadSites();
+        loadUnassignedDevices();
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    // Users
+    async function loadUsers() {
+      try {
+        users = await api('/api/users') || [];
+        renderUsers();
+      } catch (err) {
+        document.getElementById('usersList').innerHTML = `
+          <div class="empty-state">
+            <h3>Sistema utenti non configurato</h3>
+            <p>Gli utenti saranno disponibili quando l'autenticazione sara attivata</p>
+          </div>
+        `;
+      }
+    }
+
+    function renderUsers() {
+      const container = document.getElementById('usersList');
+
+      if (users.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <h3>Nessun utente trovato</h3>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Ruolo</th>
+                <th>Email</th>
+                <th>Siti Assegnati</th>
+                <th>Azioni</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(u => `
+                <tr>
+                  <td>${u.username}</td>
+                  <td><span class="badge badge-${u.role === 'admin' ? 'success' : 'info'}">${u.role}</span></td>
+                  <td>${u.email || '-'}</td>
+                  <td id="user-sites-${u.id}">Caricamento...</td>
+                  <td>
+                    <button class="btn btn-secondary btn-sm" onclick="editUserSites(${u.id}, '${u.username}')">
+                      Assegna Siti
+                    </button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      // Load sites for each user
+      users.forEach(u => loadUserSites(u.id));
+    }
+
+    async function loadUserSites(userId) {
+      try {
+        const userSites = await api(`/api/admin/users/${userId}/sites`);
+        const cell = document.getElementById(`user-sites-${userId}`);
+        if (userSites.length === 0) {
+          cell.innerHTML = '<span class="badge badge-warning">Accesso Globale</span>';
+        } else {
+          cell.innerHTML = userSites.map(s => `<span class="badge badge-info">${s.name}</span>`).join(' ');
+        }
+      } catch (err) {
+        document.getElementById(`user-sites-${userId}`).textContent = '-';
+      }
+    }
+
+    async function editUserSites(userId, username) {
+      document.getElementById('userSitesUserId').value = userId;
+      document.getElementById('userSitesUsername').textContent = username;
+
+      // Load current sites
+      let userSites = [];
+      try {
+        userSites = await api(`/api/admin/users/${userId}/sites`);
+      } catch (err) {}
+
+      const userSiteIds = userSites.map(s => s.id);
+
+      // Render checkboxes
+      document.getElementById('userSitesCheckboxes').innerHTML = sites.map(site => `
+        <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+          <input type="checkbox" name="site_ids" value="${site.id}"
+                 ${userSiteIds.includes(site.id) ? 'checked' : ''}>
+          ${site.name}
+        </label>
+      `).join('') || '<p style="color: var(--text-muted);">Nessun sito disponibile</p>';
+
+      document.getElementById('userSitesModal').classList.add('active');
+    }
+
+    function closeUserSitesModal() {
+      document.getElementById('userSitesModal').classList.remove('active');
+    }
+
+    async function saveUserSites(event) {
+      event.preventDefault();
+
+      const userId = document.getElementById('userSitesUserId').value;
+      const checkboxes = document.querySelectorAll('#userSitesCheckboxes input[type="checkbox"]:checked');
+      const siteIds = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+      try {
+        await api(`/api/admin/users/${userId}/sites`, {
+          method: 'PUT',
+          body: { site_ids: siteIds }
+        });
+        showAlert('Siti assegnati con successo');
+        closeUserSitesModal();
+        loadUserSites(userId);
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+
+    // Preview
+    async function loadPreview() {
+      try {
+        const result = await api('/api/admin/sites/preview');
+
+        // Stats
+        document.getElementById('previewStats').innerHTML = `
+          <div class="card" style="margin-bottom: 0;">
+            <div style="display: flex; gap: 24px;">
+              <div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--accent-cyan);">${result.stats.total}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Totale Device</div>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--accent-green);">${result.stats.assigned}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Assegnati</div>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--accent-yellow);">${result.stats.unassigned}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Non Assegnati</div>
+              </div>
+              <div>
+                <div style="font-size: 24px; font-weight: 700; color: var(--accent-purple);">${result.stats.changed}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">Da Aggiornare</div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        // Table
+        document.getElementById('previewBody').innerHTML = result.preview.slice(0, 100).map(p => `
+          <tr>
+            <td>${p.device_sysname || '-'}</td>
+            <td><code>${p.device_ip}</code></td>
+            <td>${p.current_site_id ? `<span class="badge badge-info">Site ${p.current_site_id}</span>` : '-'}</td>
+            <td>${p.matched_site_name ? `<span class="badge badge-success">${p.matched_site_name}</span>` : '<span class="badge badge-warning">Nessuno</span>'}</td>
+            <td>${p.matched_rule ? `<code>${p.matched_rule.type}: ${p.matched_rule.value}</code>` : '-'}</td>
+          </tr>
+        `).join('');
+
+        if (result.preview.length > 100) {
+          document.getElementById('previewBody').innerHTML += `
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted);">
+                Mostrati 100 di ${result.preview.length} device
+              </td>
+            </tr>
+          `;
+        }
+      } catch (err) {
+        showAlert(err.message, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

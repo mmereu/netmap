@@ -1,0 +1,2543 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetMap - Discovery Dashboard</title>
+
+  <!-- Components -->
+  <link rel="stylesheet" href="device-panel.css">
+  <link rel="stylesheet" href="tooltip-styles.css">
+
+  <!-- Industrial Control Panel Theme -->
+  <link rel="stylesheet" href="discovery-industrial.css">
+
+  <!-- Skeleton Loading States -->
+  <link rel="stylesheet" href="skeleton-loader.css">
+
+  <style>
+    :root {
+      --bg-dark: #0b1021;
+      --bg-card: #111a31;
+      --bg-card-hover: #1a2332;
+      --bg-input: #0f162b;
+      --border: #1f2a48;
+      --border-focus: #4b6fff;
+      --text-primary: #e4e7ef;
+      --text-secondary: #9fb3ff;
+      --text-muted: #6b7280;
+      --accent-blue: #4b6fff;
+      --accent-green: #22c55e;
+      --accent-red: #ef4444;
+      --accent-yellow: #fbbf24;
+      --accent-purple: #a855f7;
+      --accent-cyan: #06b6d4;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg-dark);
+      color: var(--text-primary);
+      font-family: 'Inter', 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+
+    /* Navigation */
+    .navbar {
+      background: rgba(17, 26, 49, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .navbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .navbar-brand h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .navbar-brand .version {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--bg-input);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .navbar-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .nav-link:hover, .nav-link.active {
+      background: var(--bg-card);
+      color: var(--text-primary);
+    }
+
+    .nav-link.active {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent-blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3d5bdb;
+      transform: translateY(-1px);
+    }
+
+    .btn-success {
+      background: var(--accent-green);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #16a34a;
+    }
+
+    .btn-secondary {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+    }
+
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent-blue);
+      transform: translateY(-2px);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .stat-icon.blue { background: rgba(75, 111, 255, 0.15); color: var(--accent-blue); }
+    .stat-icon.green { background: rgba(34, 197, 94, 0.15); color: var(--accent-green); }
+    .stat-icon.purple { background: rgba(168, 85, 247, 0.15); color: var(--accent-purple); }
+    .stat-icon.cyan { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); }
+    .stat-icon.yellow { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+
+    .stat-content {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .stat-trend {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .stat-trend.up { color: var(--accent-green); }
+    .stat-trend.down { color: var(--accent-red); }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-body {
+      padding: 20px;
+    }
+
+    /* Search and Filters */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 300px;
+      position: relative;
+    }
+
+    .search-box input {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px 10px 44px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 3px rgba(75, 111, 255, 0.1);
+    }
+
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .search-box::before {
+      content: "🔍";
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      opacity: 0.5;
+    }
+
+    .filter-select {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+      color: var(--text-primary);
+      font-size: 14px;
+      min-width: 160px;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    /* Data Table */
+    .table-container {
+      overflow-x: auto;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .data-table th {
+      text-align: left;
+      padding: 12px 16px;
+      background: var(--bg-input);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .data-table th:hover {
+      color: var(--text-primary);
+    }
+
+    .data-table th.sorted {
+      color: var(--accent-blue);
+    }
+
+    .data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+
+    .data-table tr:hover td {
+      background: rgba(75, 111, 255, 0.08);
+      transform: scale(1.001);
+    }
+
+    .data-table tr {
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    /* Status Badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .status-badge.up {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--accent-green);
+    }
+
+    .status-badge.down {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+    }
+
+    .status-badge.unknown {
+      background: rgba(107, 114, 128, 0.15);
+      color: var(--text-muted);
+    }
+
+    .status-badge.warning {
+      background: rgba(251, 191, 36, 0.15);
+      color: var(--accent-yellow);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Device Name Cell */
+    .device-name {
+      font-weight: 600;
+      color: var(--accent-blue);
+    }
+
+    .device-ip {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'Consolas', monospace;
+    }
+
+    /* Vendor Badge */
+    .vendor-badge {
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--bg-input);
+      color: var(--text-secondary);
+    }
+
+    /* Sync Status Panel */
+    .sync-panel {
+      background: linear-gradient(135deg, rgba(75, 111, 255, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .sync-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .sync-title {
+      font-size: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sync-info {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .sync-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sync-item-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .sync-item-value {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    /* Progress Bar */
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-input);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan));
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.2) 50%,
+        transparent 100%
+      );
+      animation: shimmer 1.5s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    /* Pagination */
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .pagination-info {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .pagination-buttons {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pagination-btn {
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-primary);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--bg-card-hover);
+      border-color: var(--accent-blue);
+    }
+
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Toast Notifications */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 300px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+      animation: slideIn 0.3s ease;
+    }
+
+    .toast.success { border-left: 4px solid var(--accent-green); }
+    .toast.error { border-left: 4px solid var(--accent-red); }
+    .toast.info { border-left: 4px solid var(--accent-blue); }
+    .toast.warning { border-left: 4px solid var(--accent-yellow); }
+
+    @keyframes slideIn {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Grid Layout */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .action-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .action-card:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-card-hover);
+      transform: translateY(-2px);
+    }
+
+    .action-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      background: rgba(75, 111, 255, 0.15);
+      color: var(--accent-blue);
+    }
+
+    .action-content h4 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .action-content p {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* Site Selector */
+    .site-selector-bar {
+      background: linear-gradient(135deg, rgba(75, 111, 255, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%);
+      border: 2px solid var(--accent-blue);
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .site-selector-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .site-selector-label span:first-child {
+      font-size: 28px;
+    }
+
+    .site-selector-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex: 1;
+      max-width: 500px;
+    }
+
+    .site-selector {
+      flex: 1;
+      background: var(--bg-dark);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 20px;
+      color: var(--text-primary);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239fb3ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 48px;
+    }
+
+    .site-selector:hover {
+      border-color: var(--accent-blue);
+    }
+
+    .site-selector:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 4px rgba(75, 111, 255, 0.2);
+    }
+
+    .site-selector option {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 12px;
+    }
+
+    .site-device-count {
+      background: var(--accent-blue);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    /* LLDP Discovery Card - Prominente */
+    .lldp-discovery-card {
+      background: linear-gradient(135deg, rgba(75, 111, 255, 0.05) 0%, rgba(6, 182, 212, 0.05) 100%);
+      border: 2px solid var(--accent-blue);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(75, 111, 255, 0.15);
+      margin-bottom: 32px;
+    }
+
+    .lldp-discovery-card .card-header {
+      background: linear-gradient(135deg, rgba(75, 111, 255, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+      border-bottom: 2px solid var(--accent-blue);
+      padding: 20px 24px;
+    }
+
+    .lldp-discovery-card .card-title {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    /* Discovery Stats - Grandi e Animati */
+    .discovery-stat {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .discovery-stat:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      border-color: var(--accent-blue);
+    }
+
+    .discovery-stat-value {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .discovery-stat-value.animated {
+      animation: countUp 0.5s ease-out;
+    }
+
+    @keyframes countUp {
+      0% { transform: scale(0.8); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .discovery-stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Skeleton Loading */
+    .skeleton {
+      background: linear-gradient(
+        90deg,
+        var(--bg-input) 0%,
+        var(--bg-card-hover) 50%,
+        var(--bg-input) 100%
+      );
+      background-size: 200% 100%;
+      animation: skeleton-loading 1.5s ease-in-out infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes skeleton-loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .skeleton-text {
+      height: 16px;
+      margin-bottom: 8px;
+    }
+
+    .skeleton-stat {
+      height: 80px;
+      border-radius: 12px;
+    }
+
+    /* Action Card - Icone più grandi */
+    .action-card .action-icon {
+      width: 56px;
+      height: 56px;
+      font-size: 28px;
+    }
+
+    .action-card h4 {
+      font-size: 15px;
+    }
+
+    .action-card p {
+      font-size: 13px;
+    }
+
+    /* Table Container - Max height per scroll */
+    .table-container {
+      overflow-x: auto;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    /* WebSocket Connection Status Indicator */
+    .ws-status {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: rgba(0,0,0,0.7);
+      border-radius: 20px;
+      font-size: 0.75rem;
+      z-index: 9998;
+      transition: all 0.3s ease;
+    }
+
+    .ws-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transition: background-color 0.3s ease;
+    }
+
+    .ws-status.connected .ws-status-dot {
+      background: var(--accent-green);
+      box-shadow: 0 0 6px var(--accent-green);
+    }
+
+    .ws-status.disconnected .ws-status-dot {
+      background: var(--accent-red);
+      box-shadow: 0 0 6px var(--accent-red);
+    }
+
+    .ws-status.reconnecting .ws-status-dot {
+      background: var(--accent-yellow);
+      box-shadow: 0 0 6px var(--accent-yellow);
+      animation: pulse 1s infinite;
+    }
+
+    .ws-status-text {
+      color: rgba(255,255,255,0.7);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .ws-status.connected .ws-status-text {
+      color: var(--accent-green);
+    }
+
+    .ws-status.disconnected .ws-status-text {
+      color: var(--accent-red);
+    }
+
+    .ws-status.reconnecting .ws-status-text {
+      color: var(--accent-yellow);
+    }
+
+    /* Responsive */
+    /* Visually hidden but accessible to screen readers */
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 768px) {
+      .navbar {
+        padding: 0 16px;
+      }
+
+      .container {
+        padding: 16px;
+      }
+
+      .page-header {
+        flex-direction: column;
+      }
+
+      .filters-bar {
+        flex-direction: column;
+      }
+
+      .search-box {
+        min-width: 100%;
+      }
+
+      .discovery-stat-value {
+        font-size: 36px;
+      }
+
+      .table-container {
+        max-height: 400px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar" role="banner" aria-label="Intestazione principale">
+    <div class="navbar-brand">
+      <h1>NetMap</h1>
+      <span class="version">v2.0</span>
+    </div>
+    <nav class="navbar-nav" role="navigation" aria-label="Navigazione principale">
+      <a href="index.html" class="nav-link">Dashboard</a>
+      <a href="discovery.html" class="nav-link active" aria-current="page">Discovery</a>
+      <a href="mac-tracker.html" class="nav-link">MAC Tracker</a>
+      <a href="topology-nedi-layer.html" class="nav-link" id="topologyNavLink">Topology</a>
+      <a href="port-view.html" class="nav-link">Port View</a>
+    </nav>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="container" role="main" aria-label="Contenuto principale - Dashboard Discovery">
+    <!-- Site Selector (Prominente) -->
+    <div class="site-selector-bar">
+      <div class="site-selector-label">
+        <span>🏢</span>
+        <span>Seleziona Sito</span>
+      </div>
+      <div class="site-selector-wrapper">
+        <label for="siteSelector" class="visually-hidden">Seleziona sito</label>
+        <select id="siteSelector" class="site-selector" onchange="onSiteChange()" aria-label="Seleziona sito da visualizzare">
+          <option value="">Tutti i Siti</option>
+        </select>
+        <span class="site-device-count" id="siteDeviceCount"></span>
+      </div>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">Network Discovery</h1>
+        <p class="page-subtitle" id="pageSubtitle">Gestisci e sincronizza i dati di rete da NeDi</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="refreshStats()" aria-label="Aggiorna statistiche di rete">
+          <span aria-hidden="true">↻</span> Aggiorna
+        </button>
+        <button class="btn btn-primary" onclick="startSync()" id="syncBtn" aria-label="Sincronizza dati da NeDi">
+          <span aria-hidden="true">⚡</span> Sync NeDi
+        </button>
+      </div>
+    </div>
+
+    <!-- Sync Status Panel -->
+    <section class="sync-panel" id="syncPanel" aria-label="Pannello stato sincronizzazione">
+      <div class="sync-header">
+        <div class="sync-title">
+          <span>🔄</span>
+          <span>Stato Sincronizzazione</span>
+        </div>
+        <span class="status-badge unknown" id="syncStatus">
+          <span class="status-dot"></span>
+          <span id="syncStatusText">Caricamento...</span>
+        </span>
+      </div>
+      <div class="sync-info">
+        <div class="sync-item">
+          <span class="sync-item-label">Ultima Sync</span>
+          <span class="sync-item-value" id="lastSync">--</span>
+        </div>
+        <div class="sync-item">
+          <span class="sync-item-label">Connessione NeDi</span>
+          <span class="sync-item-value" id="nediConnection">--</span>
+        </div>
+        <div class="sync-item">
+          <span class="sync-item-label">Auto-Sync</span>
+          <span class="sync-item-value" id="autoSync">--</span>
+        </div>
+        <div class="sync-item">
+          <span class="sync-item-label">Prossima Sync</span>
+          <span class="sync-item-value" id="nextSync">--</span>
+        </div>
+      </div>
+      <div class="progress-bar" id="syncProgress" style="display: none;">
+        <div class="progress-bar-fill" id="syncProgressFill" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="stats-grid" aria-label="Statistiche rete">
+      <div class="stat-card">
+        <div class="stat-icon blue">📡</div>
+        <div class="stat-content">
+          <div class="stat-label">Devices Totali</div>
+          <div class="stat-value" id="statDevices">--</div>
+          <div class="stat-trend up" id="statDevicesTrend"></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">🔌</div>
+        <div class="stat-content">
+          <div class="stat-label">Interfacce</div>
+          <div class="stat-value" id="statInterfaces">--</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">🔗</div>
+        <div class="stat-content">
+          <div class="stat-label">Links</div>
+          <div class="stat-value" id="statLinks">--</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon cyan">💻</div>
+        <div class="stat-content">
+          <div class="stat-label">Nodes</div>
+          <div class="stat-value" id="statNodes">--</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon yellow">✅</div>
+        <div class="stat-content">
+          <div class="stat-label">Online</div>
+          <div class="stat-value" id="statOnline">--</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="card" style="margin-bottom: 24px;" aria-label="Azioni rapide">
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>⚡</span>
+          Azioni Rapide
+        </h3>
+      </div>
+      <div class="card-body">
+        <div class="quick-actions">
+          <div class="action-card" onclick="startSync()" role="button" tabindex="0" aria-label="Sync Completa: Sincronizza tutti i dati da NeDi" onkeydown="handleActionCardKeydown(event, startSync)">
+            <div class="action-icon" aria-hidden="true">🔄</div>
+            <div class="action-content">
+              <h4>Sync Completa</h4>
+              <p>Sincronizza tutti i dati da NeDi</p>
+            </div>
+          </div>
+          <div class="action-card" onclick="toggleAutoSync()" role="button" tabindex="0" aria-label="Auto-Sync: Attiva o disattiva sync automatica" onkeydown="handleActionCardKeydown(event, toggleAutoSync)">
+            <div class="action-icon" aria-hidden="true">⏰</div>
+            <div class="action-content">
+              <h4>Auto-Sync</h4>
+              <p>Attiva/disattiva sync automatica</p>
+            </div>
+          </div>
+          <div class="action-card" onclick="goToTopology()" role="button" tabindex="0" aria-label="Visualizza Mappa: Apri la mappa topologica" onkeydown="handleActionCardKeydown(event, goToTopology)">
+            <div class="action-icon" aria-hidden="true">🗺️</div>
+            <div class="action-content">
+              <h4>Visualizza Mappa</h4>
+              <p>Apri la mappa topologica</p>
+            </div>
+          </div>
+          <div class="action-card" onclick="exportData()" role="button" tabindex="0" aria-label="Export Dati: Esporta devices in JSON o CSV" onkeydown="handleActionCardKeydown(event, exportData)">
+            <div class="action-icon" aria-hidden="true">📥</div>
+            <div class="action-content">
+              <h4>Export Dati</h4>
+              <p>Esporta devices in JSON/CSV</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LLDP SNMP Discovery -->
+    <section class="card lldp-discovery-card" aria-label="Discovery LLDP via SNMP">
+      <div class="card-header">
+        <h3 class="card-title">
+          <span style="font-size: 28px;">🔍</span>
+          Discovery LLDP via SNMP
+        </h3>
+        <span class="status-badge unknown" id="lldpDiscoveryStatus" style="display: none;">
+          <span class="status-dot"></span>
+          <span id="lldpStatusText">In attesa</span>
+        </span>
+      </div>
+      <div class="card-body">
+        <!-- Discovery Form -->
+        <div style="display: flex; gap: 12px; margin-bottom: 16px; align-items: flex-end; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 300px;">
+            <label for="lldpNetworkInput" style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">
+              Network da scansionare
+            </label>
+            <input
+              type="text"
+              id="lldpNetworkInput"
+              placeholder="es. 192.168.21.0/24"
+              style="width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; color: var(--text-primary); font-size: 14px; font-family: 'Consolas', monospace;"
+              value="192.168.21.0/24"
+              aria-label="Network da scansionare in formato CIDR"
+              aria-describedby="lldpNetworkHelp"
+            />
+            <span id="lldpNetworkHelp" class="visually-hidden">Inserisci la rete in formato CIDR, ad esempio 192.168.21.0/24</span>
+          </div>
+          <div style="min-width: 200px;">
+            <label for="lldpCommunityInput" style="display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; font-weight: 500;">
+              Community SNMP
+            </label>
+            <input
+              type="text"
+              id="lldpCommunityInput"
+              value="public"
+              disabled
+              style="width: 100%; background: var(--bg-input); border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; color: var(--text-muted); font-size: 14px; opacity: 0.7; cursor: not-allowed;"
+              aria-label="Community SNMP (campo disabilitato)"
+              aria-disabled="true"
+            />
+          </div>
+          <button
+            class="btn btn-primary"
+            onclick="startLldpDiscovery()"
+            id="lldpDiscoveryBtn"
+            style="height: 42px;"
+            aria-label="Avvia discovery LLDP via SNMP sulla rete specificata"
+          >
+            <span aria-hidden="true">▶️</span> Avvia Discovery
+          </button>
+        </div>
+
+        <!-- Stats Row - Grandi e Animati -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
+          <div class="discovery-stat">
+            <div class="discovery-stat-value" style="color: var(--accent-blue);" id="lldpScannedCount">0</div>
+            <div class="discovery-stat-label">Host Scansionati</div>
+          </div>
+          <div class="discovery-stat">
+            <div class="discovery-stat-value" style="color: var(--accent-green);" id="lldpApFoundCount">0</div>
+            <div class="discovery-stat-label">AP Trovati</div>
+          </div>
+          <div class="discovery-stat">
+            <div class="discovery-stat-value" style="color: var(--accent-purple);" id="lldpDevicesCount">0</div>
+            <div class="discovery-stat-label">Altri Device</div>
+          </div>
+          <div class="discovery-stat">
+            <div class="discovery-stat-value" style="color: var(--accent-red);" id="lldpErrorsCount">0</div>
+            <div class="discovery-stat-label">Errori</div>
+          </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="lldpProgressBar" style="display: none; margin-bottom: 16px;">
+          <div class="progress-bar-fill" id="lldpProgressFill" style="width: 0%"></div>
+        </div>
+
+        <!-- Log Output -->
+        <div style="background: var(--bg-dark); border: 2px solid var(--border); border-radius: 12px; padding: 20px; max-height: 450px; overflow-y: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; line-height: 1.8; box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);" id="lldpLogOutput">
+          <div style="color: var(--text-muted); text-align: center; padding: 40px 20px;">
+            <div style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">📋</div>
+            <div style="font-size: 15px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Log Discovery</div>
+            <div style="font-size: 13px;">I log di discovery appariranno qui...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Devices Table -->
+    <section class="card" aria-label="Tabella dispositivi di rete">
+      <div class="card-header">
+        <h3 class="card-title">
+          <span>📋</span>
+          Devices
+          <span style="font-weight: normal; font-size: 13px; color: var(--text-muted);" id="deviceCount">(0)</span>
+        </h3>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary btn-icon" onclick="refreshDevices()" title="Aggiorna" aria-label="Aggiorna elenco dispositivi">
+            <span aria-hidden="true">↻</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card-body" style="border-bottom: 1px solid var(--border); padding-bottom: 16px;">
+        <div class="filters-bar">
+          <div class="search-box">
+            <label for="searchInput" class="visually-hidden">Cerca dispositivi</label>
+            <input type="text" id="searchInput" placeholder="Cerca per nome, IP, vendor, location..." oninput="filterDevices()" aria-label="Cerca dispositivi per nome, IP, vendor o location">
+          </div>
+          <label for="statusFilter" class="visually-hidden">Filtra per stato</label>
+          <select class="filter-select" id="statusFilter" onchange="filterDevices()" aria-label="Filtra dispositivi per stato">
+            <option value="">Tutti gli stati</option>
+            <option value="up">Online</option>
+            <option value="down">Offline</option>
+            <option value="unknown">Sconosciuto</option>
+          </select>
+          <label for="vendorFilter" class="visually-hidden">Filtra per vendor</label>
+          <select class="filter-select" id="vendorFilter" onchange="filterDevices()" aria-label="Filtra dispositivi per vendor">
+            <option value="">Tutti i vendor</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-container">
+        <table class="data-table" id="devicesTable">
+          <thead>
+            <tr>
+              <th onclick="sortTable('sysname')">Nome ↕</th>
+              <th onclick="sortTable('ip')">IP ↕</th>
+              <th onclick="sortTable('vendor')">Vendor ↕</th>
+              <th onclick="sortTable('model')">Modello</th>
+              <th onclick="sortTable('location')">Location</th>
+              <th onclick="sortTable('status')">Status ↕</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="devicesTableBody">
+            <!-- Initial skeleton loading state - will be populated by JS -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <nav class="pagination" aria-label="Paginazione tabella dispositivi">
+        <div class="pagination-info" aria-live="polite">
+          Mostrando <span id="paginationStart">0</span>-<span id="paginationEnd">0</span> di <span id="paginationTotal">0</span> devices
+        </div>
+        <div class="pagination-buttons">
+          <button class="pagination-btn" id="prevPageBtn" onclick="prevPage()" disabled aria-label="Vai alla pagina precedente">
+            <span aria-hidden="true">←</span> Precedente
+          </button>
+          <button class="pagination-btn" id="nextPageBtn" onclick="nextPage()" disabled aria-label="Vai alla pagina successiva">
+            Successivo <span aria-hidden="true">→</span>
+          </button>
+        </div>
+      </nav>
+    </section>
+  </main>
+
+  <!-- Device Panel -->
+  <div id="devicePanel" class="device-panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle">
+    <div class="panel-header">
+      <h3 id="panelTitle">Device</h3>
+      <button class="panel-close" onclick="closeDevicePanel()" aria-label="Chiudi pannello dettagli dispositivo">
+        <span aria-hidden="true">×</span>
+      </button>
+    </div>
+    <div class="panel-tabs" role="tablist" aria-label="Schede informazioni dispositivo">
+      <button class="tab active" data-tab="overview" onclick="switchTab('overview')" role="tab" aria-selected="true" aria-controls="tabOverview" id="tab-overview">Overview</button>
+      <button class="tab" data-tab="ports" onclick="switchTab('ports')" role="tab" aria-selected="false" aria-controls="tabPorts" id="tab-ports">Ports</button>
+      <button class="tab" data-tab="neighbors" onclick="switchTab('neighbors')" role="tab" aria-selected="false" aria-controls="tabNeighbors" id="tab-neighbors">Connections</button>
+      <button class="tab" data-tab="events" onclick="switchTab('events')" role="tab" aria-selected="false" aria-controls="tabEvents" id="tab-events">Events</button>
+    </div>
+    <div class="panel-content" id="panelContent">
+      <div id="tabOverview" class="tab-content active" role="tabpanel" aria-labelledby="tab-overview">
+        <div class="empty-state">
+          <p>Seleziona un device dalla tabella</p>
+        </div>
+      </div>
+      <div id="tabPorts" class="tab-content" role="tabpanel" aria-labelledby="tab-ports">
+      </div>
+      <div id="tabNeighbors" class="tab-content" role="tabpanel" aria-labelledby="tab-neighbors">
+      </div>
+      <div id="tabEvents" class="tab-content" role="tabpanel" aria-labelledby="tab-events">
+      </div>
+    </div>
+    <div class="panel-footer">
+      <button onclick="refreshDevicePanel()" aria-label="Aggiorna informazioni dispositivo">Refresh</button>
+      <span id="panelTimestamp"></span>
+    </div>
+  </div>
+
+  <!-- Tooltip -->
+  <div id="tooltip"></div>
+
+  <!-- WebSocket Connection Status Indicator -->
+  <div class="ws-status disconnected" id="wsStatus">
+    <span class="ws-status-dot"></span>
+    <span class="ws-status-text">Disconnected</span>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="skeleton-loader.js"></script>
+  <script src="device-panel.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="tooltip-addon.js"></script>
+  <!-- Socket.IO Client Library (auto-served by Socket.IO server) -->
+  <script src="/socket.io/socket.io.js"></script>
+
+  <script>
+    // State
+    let allDevices = [];
+    let filteredDevices = [];
+    let currentPage = 1;
+    const pageSize = 25;
+    let sortColumn = 'sysname';
+    let sortDirection = 'asc';
+    let vendors = new Set();
+    let sites = [];
+    let currentSite = ''; // Sito selezionato (vuoto = tutti)
+
+    // =========================================================================
+    // WebSocket Connection (Socket.IO)
+    // =========================================================================
+    const socket = io({
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: Infinity
+    });
+
+    // =========================================================================
+    // Connection Status Management
+    // =========================================================================
+
+    /**
+     * Update WebSocket connection status indicator
+     * @param {string} status - 'connected', 'disconnected', or 'reconnecting'
+     */
+    function updateConnectionStatus(status) {
+      const wsStatus = document.getElementById('wsStatus');
+      if (!wsStatus) return;
+
+      const wsStatusText = wsStatus.querySelector('.ws-status-text');
+
+      // Remove all status classes
+      wsStatus.classList.remove('connected', 'disconnected', 'reconnecting');
+
+      // Add appropriate class and update text
+      wsStatus.classList.add(status);
+      switch (status) {
+        case 'connected':
+          wsStatusText.textContent = 'Live';
+          break;
+        case 'disconnected':
+          wsStatusText.textContent = 'Offline';
+          break;
+        case 'reconnecting':
+          wsStatusText.textContent = 'Reconnecting...';
+          break;
+      }
+    }
+
+    // WebSocket connection event handlers
+    socket.on('connect', () => {
+      updateConnectionStatus('connected');
+    });
+
+    socket.on('disconnect', (reason) => {
+      updateConnectionStatus('disconnected');
+      if (reason === 'io server disconnect') {
+        // Server initiated disconnect, manually reconnect
+        socket.connect();
+      }
+    });
+
+    socket.on('reconnecting', (attemptNumber) => {
+      updateConnectionStatus('reconnecting');
+    });
+
+    socket.on('reconnect', (attemptNumber) => {
+      updateConnectionStatus('connected');
+    });
+
+    socket.on('reconnect_attempt', (attemptNumber) => {
+      updateConnectionStatus('reconnecting');
+    });
+
+    socket.on('connect_error', (error) => {
+      updateConnectionStatus('disconnected');
+    });
+
+    // =========================================================================
+    // WebSocket Event Listeners for Real-Time Updates
+    // IMPORTANT: Register OUTSIDE connect handler to prevent duplication on reconnect
+    // =========================================================================
+
+    /**
+     * Handle discovery progress updates from backend
+     * Updates progress bar, stats, and log in real-time during discovery operations
+     */
+    socket.on('discovery-progress', (data) => {
+      // Update progress bar
+      const progressBar = document.getElementById('lldpProgressBar');
+      const progressFill = document.getElementById('lldpProgressFill');
+
+      if (progressBar && progressFill) {
+        // Show progress bar when discovery is active
+        if (data.status === 'scanning' || data.status === 'progress') {
+          progressBar.style.display = 'block';
+          progressFill.style.width = `${data.progress || 0}%`;
+        } else if (data.status === 'completed') {
+          progressFill.style.width = '100%';
+        }
+      }
+
+      // Update discovery stats in real-time
+      if (data.scanned !== undefined) {
+        updateStatWithAnimation('lldpScannedCount', data.scanned);
+      }
+      if (data.current !== undefined && data.total !== undefined) {
+        // Update scanned count based on current/total during scanning
+        updateStatWithAnimation('lldpScannedCount', data.current);
+      }
+      if (data.apFound !== undefined) {
+        updateStatWithAnimation('lldpApFoundCount', data.apFound);
+      }
+      if (data.apImported !== undefined) {
+        updateStatWithAnimation('lldpApFoundCount', data.apImported);
+      }
+      if (data.devicesFound !== undefined) {
+        updateStatWithAnimation('lldpDevicesCount', data.devicesFound);
+      }
+      if (data.lldpEnabled !== undefined) {
+        updateStatWithAnimation('lldpDevicesCount', data.lldpEnabled);
+      }
+      if (data.errors !== undefined) {
+        updateStatWithAnimation('lldpErrorsCount', data.errors);
+      }
+
+      // Update status badge
+      const statusBadge = document.getElementById('lldpDiscoveryStatus');
+      const statusText = document.getElementById('lldpStatusText');
+
+      if (statusBadge && statusText) {
+        if (data.status === 'scanning' || data.status === 'progress') {
+          statusBadge.style.display = 'flex';
+          statusBadge.className = 'status-badge warning';
+          statusText.textContent = 'In esecuzione';
+        } else if (data.status === 'completed') {
+          statusBadge.className = 'status-badge up';
+          statusText.textContent = 'Completata';
+        } else if (data.status === 'error') {
+          statusBadge.className = 'status-badge down';
+          statusText.textContent = 'Errore';
+        }
+      }
+
+      // Add real-time log entries
+      if (data.message) {
+        const logType = data.status === 'error' ? 'error' :
+                       data.status === 'completed' ? 'success' : 'info';
+        appendLog(logType, data.message);
+      }
+
+      // Handle scan-specific progress messages
+      if (data.scanType && data.current !== undefined && data.total !== undefined) {
+        // Only log at certain intervals to avoid log spam
+        if (data.current % 10 === 0 || data.current === data.total) {
+          appendLog('info', `Scansione ${data.scanType}: ${data.current}/${data.total} (${data.progress}%)`);
+        }
+      }
+    });
+
+    /**
+     * Handle device status updates from backend
+     * Updates device status in the table in real-time without page refresh
+     */
+    socket.on('device-status', (data) => {
+      if (!data || !data.ip) return;
+
+      // Find device in allDevices array
+      const deviceIndex = allDevices.findIndex(d => d.ip === data.ip);
+      if (deviceIndex === -1) return;
+
+      // Update device status in our local data
+      const oldStatus = allDevices[deviceIndex].status;
+      allDevices[deviceIndex].status = data.status;
+
+      // Only update UI if status actually changed
+      if (oldStatus !== data.status) {
+        // Re-render table to reflect status change
+        filterDevices();
+
+        // Show toast notification for status change
+        const statusLabel = data.status === 'up' ? 'Online' : data.status === 'down' ? 'Offline' : 'Unknown';
+        const deviceName = data.sysname || data.ip;
+        showToast(`${deviceName}: ${statusLabel}`, data.status === 'up' ? 'success' : 'warning');
+
+        // Update online count stat
+        const onlineCount = allDevices.filter(d =>
+          d.status === 'up' || d.status === 'active' || d.status === 1
+        ).length;
+        document.getElementById('statOnline').textContent = `${onlineCount}/${allDevices.length}`;
+      }
+    });
+
+    /**
+     * Handle new event notifications from backend
+     * Adds events to the device panel events tab in real-time
+     */
+    socket.on('new-event', (data) => {
+      if (!data) return;
+
+      // Store the new event in a global array for the events panel
+      if (!window.realtimeEvents) {
+        window.realtimeEvents = [];
+      }
+
+      // Add event with timestamp if not present
+      const event = {
+        ...data,
+        timestamp: data.timestamp || new Date().toISOString()
+      };
+
+      // Add to beginning of array (newest first)
+      window.realtimeEvents.unshift(event);
+
+      // Keep only last 100 events to prevent memory issues
+      if (window.realtimeEvents.length > 100) {
+        window.realtimeEvents = window.realtimeEvents.slice(0, 100);
+      }
+
+      // If the events tab is currently visible for this device, update it
+      const tabEvents = document.getElementById('tabEvents');
+      const devicePanel = document.getElementById('devicePanel');
+      if (tabEvents && devicePanel && devicePanel.classList.contains('open')) {
+        // Check if this event is for the currently displayed device
+        const currentDeviceName = document.getElementById('panelTitle').textContent;
+        if (data.sysname === currentDeviceName || data.ip === currentDeviceName) {
+          // Add new event to the events tab
+          addEventToEventsPanel(event);
+        }
+      }
+
+      // Show toast for important events
+      if (data.severity === 'error' || data.severity === 'warning') {
+        const deviceName = data.sysname || data.ip || 'Device';
+        showToast(`${deviceName}: ${data.message || data.type}`, data.severity === 'error' ? 'error' : 'warning');
+      }
+    });
+
+    /**
+     * Add a new event entry to the events panel in the device panel
+     * @param {Object} event - Event object with type, severity, message, timestamp
+     */
+    function addEventToEventsPanel(event) {
+      const tabEvents = document.getElementById('tabEvents');
+      if (!tabEvents) return;
+
+      // Check if there's an empty state message
+      const emptyState = tabEvents.querySelector('.empty-state');
+      if (emptyState) {
+        tabEvents.innerHTML = '<div class="events-list" style="max-height: 400px; overflow-y: auto;"></div>';
+      }
+
+      // Get or create events list container
+      let eventsList = tabEvents.querySelector('.events-list');
+      if (!eventsList) {
+        eventsList = document.createElement('div');
+        eventsList.className = 'events-list';
+        eventsList.style.maxHeight = '400px';
+        eventsList.style.overflowY = 'auto';
+        tabEvents.appendChild(eventsList);
+      }
+
+      // Create event entry element
+      const eventEntry = document.createElement('div');
+      eventEntry.className = 'event-entry';
+      eventEntry.style.cssText = 'padding: 12px; border-bottom: 1px solid var(--border); animation: slideIn 0.3s ease;';
+
+      // Determine severity colors
+      const severityColors = {
+        error: 'var(--accent-red)',
+        warning: 'var(--accent-yellow)',
+        info: 'var(--accent-blue)',
+        success: 'var(--accent-green)'
+      };
+      const severityColor = severityColors[event.severity] || severityColors.info;
+
+      // Format timestamp
+      const timestamp = event.timestamp ? new Date(event.timestamp).toLocaleString('it-IT') : new Date().toLocaleString('it-IT');
+
+      eventEntry.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px;">
+          <span style="font-weight: 600; color: ${severityColor};">${escapeHtml(event.type || 'Event')}</span>
+          <span style="font-size: 12px; color: var(--text-muted);">${timestamp}</span>
+        </div>
+        <div style="font-size: 13px; color: var(--text-secondary);">${escapeHtml(event.message || '')}</div>
+      `;
+
+      // Insert at the beginning (newest first)
+      eventsList.insertBefore(eventEntry, eventsList.firstChild);
+
+      // Limit displayed events
+      while (eventsList.children.length > 50) {
+        eventsList.removeChild(eventsList.lastChild);
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Show skeleton loading in devices table immediately
+      showDevicesTableSkeleton();
+
+      // Prima carica i siti, poi il resto
+      await loadSites();
+      await Promise.all([
+        loadNediStats(),
+        loadSyncStatus(),
+        loadDevices()
+      ]);
+    });
+
+    // Show skeleton loading state in devices table (7 columns, 7 rows)
+    function showDevicesTableSkeleton() {
+      const tbody = document.getElementById('devicesTableBody');
+      if (tbody && window.SkeletonLoader) {
+        tbody.innerHTML = SkeletonLoader.generateTableSkeleton(7, 'devices');
+      }
+    }
+
+    // ============ SITES MANAGEMENT ============
+
+    // Carica lista siti
+    async function loadSites() {
+      try {
+        const response = await fetch('/api/nedi/sites');
+        if (!response.ok) throw new Error('Errore caricamento siti');
+
+        const data = await response.json();
+        const allSites = data.sites || [];
+
+        // Filtra solo siti con codice numerico (es. "01", "02", "10", "123")
+        // Esclude siti con nomi tipo "SN000413...", "AP", "Casetta", ecc.
+        sites = allSites.filter(site => /^\d{1,3}$/.test(site.id));
+
+        // Ordina numericamente
+        sites.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+        // Popola il selector
+        const selector = document.getElementById('siteSelector');
+        selector.innerHTML = '<option value="">🌐 Tutti i Siti</option>';
+
+        sites.forEach(site => {
+          const option = document.createElement('option');
+          option.value = site.id;
+          option.textContent = `🏢 Sito ${site.id} (${site.deviceCount} devices)`;
+          selector.appendChild(option);
+        });
+
+        // Aggiorna conteggio totale
+        const totalDevices = sites.reduce((sum, s) => sum + s.deviceCount, 0);
+        document.getElementById('siteDeviceCount').textContent = `${totalDevices} devices totali`;
+
+      } catch (err) {
+        console.error('Errore caricamento siti:', err);
+        // Non bloccare, continua comunque
+      }
+    }
+
+    // Gestisce cambio sito
+    async function onSiteChange() {
+      const selector = document.getElementById('siteSelector');
+      currentSite = selector.value;
+
+      // Aggiorna subtitle
+      const subtitle = document.getElementById('pageSubtitle');
+      if (currentSite) {
+        subtitle.textContent = `Visualizzazione dati per Sito ${currentSite}`;
+        const site = sites.find(s => s.id === currentSite);
+        document.getElementById('siteDeviceCount').textContent = site ? `${site.deviceCount} devices` : '';
+      } else {
+        subtitle.textContent = 'Gestisci e sincronizza i dati di rete da NeDi';
+        const totalDevices = sites.reduce((sum, s) => sum + s.deviceCount, 0);
+        document.getElementById('siteDeviceCount').textContent = `${totalDevices} devices totali`;
+      }
+
+      showToast(currentSite ? `Filtro: Sito ${currentSite}` : 'Visualizzazione: Tutti i siti', 'info');
+
+      // Aggiorna link topology nella navbar
+      updateTopologyLink();
+
+      // Ricarica dati filtrati
+      await Promise.all([
+        loadNediStats(),
+        loadDevices()
+      ]);
+    }
+
+    // Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+
+      const icons = { success: '✓', error: '✗', info: 'ℹ', warning: '⚠' };
+      toast.innerHTML = `
+        <span style="font-size: 18px;">${icons[type]}</span>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // Load NeDi Stats
+    async function loadNediStats() {
+      try {
+        // Aggiungi filtro sito se selezionato
+        const url = currentSite
+          ? `/api/nedi/stats?site=${encodeURIComponent(currentSite)}`
+          : '/api/nedi/stats';
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Errore caricamento stats');
+
+        const stats = await response.json();
+
+        document.getElementById('statDevices').textContent = formatNumber(stats.totalDevices || stats.devices || 0);
+        document.getElementById('statInterfaces').textContent = formatNumber(stats.totalInterfaces || stats.interfaces || 0);
+        document.getElementById('statLinks').textContent = formatNumber(stats.totalLinks || stats.links || 0);
+        document.getElementById('statNodes').textContent = formatNumber(stats.totalNodes || stats.nodes || 0);
+
+        // Per sito, mostra anche devices attivi
+        if (currentSite && stats.activeDevices !== undefined) {
+          document.getElementById('statOnline').textContent = `${stats.activeDevices}/${stats.totalDevices}`;
+        }
+
+      } catch (err) {
+        console.error('Errore stats:', err);
+        showToast('Errore caricamento statistiche NeDi', 'error');
+      }
+    }
+
+    // Load Sync Status
+    async function loadSyncStatus() {
+      try {
+        const response = await fetch('/api/admin/nedi-status');
+        if (!response.ok) throw new Error('Errore caricamento status');
+
+        const status = await response.json();
+
+        // Update sync status badge
+        const statusBadge = document.getElementById('syncStatus');
+        const statusText = document.getElementById('syncStatusText');
+
+        if (status.connected) {
+          statusBadge.className = 'status-badge up';
+          statusText.textContent = 'Connesso';
+        } else {
+          statusBadge.className = 'status-badge down';
+          statusText.textContent = 'Disconnesso';
+        }
+
+        // Update sync info
+        document.getElementById('lastSync').textContent = status.lastSync
+          ? formatDate(status.lastSync)
+          : 'Mai';
+        document.getElementById('nediConnection').textContent = status.connected
+          ? 'Attiva'
+          : 'Non disponibile';
+        document.getElementById('autoSync').textContent = status.autoSyncEnabled
+          ? `Attivo (ogni ${status.autoSyncInterval || 5} min)`
+          : 'Disattivato';
+        document.getElementById('nextSync').textContent = status.nextSync
+          ? formatDate(status.nextSync)
+          : '--';
+
+      } catch (err) {
+        console.error('Errore status:', err);
+      }
+    }
+
+    // Load Devices
+    async function loadDevices() {
+      // Show skeleton loading state while fetching
+      showDevicesTableSkeleton();
+
+      try {
+        // Aggiungi filtro sito se selezionato
+        let url = '/api/nedi/devices?limit=5000';
+        if (currentSite) {
+          url += `&site=${encodeURIComponent(currentSite)}`;
+        }
+
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Errore caricamento devices');
+
+        const data = await response.json();
+        allDevices = data.devices || data || [];
+
+        // Extract vendors for filter
+        vendors.clear();
+        allDevices.forEach(d => {
+          if (d.vendor) vendors.add(d.vendor);
+        });
+
+        // Populate vendor filter
+        const vendorFilter = document.getElementById('vendorFilter');
+        vendorFilter.innerHTML = '<option value="">Tutti i vendor</option>';
+        Array.from(vendors).sort().forEach(v => {
+          vendorFilter.innerHTML += `<option value="${v}">${v}</option>`;
+        });
+
+        // Count online devices
+        const onlineCount = allDevices.filter(d =>
+          d.status === 'up' || d.status === 'active' || d.status === 1
+        ).length;
+        document.getElementById('statOnline').textContent = `${onlineCount}/${allDevices.length}`;
+
+        filterDevices();
+
+      } catch (err) {
+        console.error('Errore devices:', err);
+        showToast('Errore caricamento devices', 'error');
+        document.getElementById('devicesTableBody').innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <div class="empty-state-title">Errore caricamento</div>
+                <p>${err.message}</p>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // Filter Devices
+    function filterDevices() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const statusFilter = document.getElementById('statusFilter').value;
+      const vendorFilter = document.getElementById('vendorFilter').value;
+
+      filteredDevices = allDevices.filter(device => {
+        // Search filter
+        const searchMatch = !search ||
+          (device.sysname || '').toLowerCase().includes(search) ||
+          (device.ip || '').toLowerCase().includes(search) ||
+          (device.vendor || '').toLowerCase().includes(search) ||
+          (device.location || '').toLowerCase().includes(search) ||
+          (device.model || '').toLowerCase().includes(search);
+
+        // Status filter
+        const deviceStatus = normalizeStatus(device.status);
+        const statusMatch = !statusFilter || deviceStatus === statusFilter;
+
+        // Vendor filter
+        const vendorMatch = !vendorFilter || device.vendor === vendorFilter;
+
+        return searchMatch && statusMatch && vendorMatch;
+      });
+
+      // Sort
+      sortDevices();
+
+      // Reset to first page
+      currentPage = 1;
+      renderDevicesTable();
+    }
+
+    // Sort Devices
+    function sortDevices() {
+      filteredDevices.sort((a, b) => {
+        let valA = a[sortColumn] || '';
+        let valB = b[sortColumn] || '';
+
+        if (typeof valA === 'string') valA = valA.toLowerCase();
+        if (typeof valB === 'string') valB = valB.toLowerCase();
+
+        if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+        if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+
+    // Sort Table
+    function sortTable(column) {
+      if (sortColumn === column) {
+        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortColumn = column;
+        sortDirection = 'asc';
+      }
+
+      sortDevices();
+      renderDevicesTable();
+    }
+
+    // Render Devices Table
+    function renderDevicesTable() {
+      const tbody = document.getElementById('devicesTableBody');
+      const start = (currentPage - 1) * pageSize;
+      const end = Math.min(start + pageSize, filteredDevices.length);
+      const pageDevices = filteredDevices.slice(start, end);
+
+      if (pageDevices.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <div class="empty-state-title">Nessun device trovato</div>
+                <p>Prova a modificare i filtri di ricerca</p>
+              </div>
+            </td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = pageDevices.map(device => {
+          const status = normalizeStatus(device.status);
+          const statusClass = status === 'up' ? 'up' : status === 'down' ? 'down' : 'unknown';
+          const statusLabel = status === 'up' ? 'Online' : status === 'down' ? 'Offline' : 'Unknown';
+
+          return `
+            <tr onclick="openDevicePanel('${device.sysname || device.ip}')" title="Click per dettagli">
+              <td>
+                <div class="device-name">${escapeHtml(device.sysname || 'N/A')}</div>
+              </td>
+              <td>
+                <code class="device-ip">${escapeHtml(device.ip || 'N/A')}</code>
+              </td>
+              <td>
+                <span class="vendor-badge">${escapeHtml(device.vendor || 'Unknown')}</span>
+              </td>
+              <td>${escapeHtml(device.model || device.devtype || '--')}</td>
+              <td>${escapeHtml(device.location || '--')}</td>
+              <td>
+                <span class="status-badge ${statusClass}">
+                  <span class="status-dot"></span>
+                  ${statusLabel}
+                </span>
+              </td>
+              <td>
+                <button class="btn btn-secondary btn-icon" onclick="event.stopPropagation(); viewOnMap('${device.ip}')" title="Vedi sulla mappa">🗺️</button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Update pagination
+      document.getElementById('paginationStart').textContent = filteredDevices.length ? start + 1 : 0;
+      document.getElementById('paginationEnd').textContent = end;
+      document.getElementById('paginationTotal').textContent = filteredDevices.length;
+      document.getElementById('deviceCount').textContent = `(${filteredDevices.length})`;
+
+      document.getElementById('prevPageBtn').disabled = currentPage === 1;
+      document.getElementById('nextPageBtn').disabled = end >= filteredDevices.length;
+    }
+
+    // Pagination
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderDevicesTable();
+      }
+    }
+
+    function nextPage() {
+      const maxPage = Math.ceil(filteredDevices.length / pageSize);
+      if (currentPage < maxPage) {
+        currentPage++;
+        renderDevicesTable();
+      }
+    }
+
+    // Sync NeDi
+    async function startSync() {
+      const btn = document.getElementById('syncBtn');
+      const originalContent = btn.innerHTML;
+
+      btn.disabled = true;
+      btn.classList.add('btn-pulse');
+      btn.innerHTML = '<div class="spinner"></div> Sync in corso...';
+
+      // Show progress
+      const progressBar = document.getElementById('syncProgress');
+      const progressFill = document.getElementById('syncProgressFill');
+      progressBar.style.display = 'block';
+
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress = Math.min(progress + 5, 90);
+        progressFill.style.width = `${progress}%`;
+      }, 200);
+
+      try {
+        const response = await fetch('/api/admin/sync-nedi', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fullSync: true })
+        });
+
+        clearInterval(progressInterval);
+        progressFill.style.width = '100%';
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Sync failed');
+        }
+
+        const result = await response.json();
+
+        showToast(`Sync completata! ${result.devicesInserted || 0} inseriti, ${result.devicesUpdated || 0} aggiornati`, 'success');
+
+        // Refresh data
+        await Promise.all([
+          loadNediStats(),
+          loadSyncStatus(),
+          loadDevices()
+        ]);
+
+      } catch (err) {
+        console.error('Errore sync:', err);
+        showToast(`Errore sync: ${err.message}`, 'error');
+      } finally {
+        clearInterval(progressInterval);
+        btn.disabled = false;
+        btn.classList.remove('btn-pulse');
+        btn.innerHTML = originalContent;
+
+        setTimeout(() => {
+          progressBar.style.display = 'none';
+          progressFill.style.width = '0%';
+        }, 1000);
+      }
+    }
+
+    // Toggle Auto Sync
+    async function toggleAutoSync() {
+      try {
+        const currentStatus = document.getElementById('autoSync').textContent;
+        const enable = currentStatus.includes('Disattivato');
+
+        const response = await fetch('/api/admin/nedi-autosync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            enabled: enable,
+            intervalMinutes: 5
+          })
+        });
+
+        if (!response.ok) throw new Error('Errore configurazione auto-sync');
+
+        showToast(`Auto-sync ${enable ? 'attivato' : 'disattivato'}`, 'success');
+        await loadSyncStatus();
+
+      } catch (err) {
+        showToast(`Errore: ${err.message}`, 'error');
+      }
+    }
+
+    // Export Data
+    function exportData() {
+      const dataStr = JSON.stringify(filteredDevices, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `netmap-devices-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+      showToast(`Esportati ${filteredDevices.length} devices`, 'success');
+    }
+
+    // Go to Topology with current site
+    function goToTopology() {
+      let url = 'topology-nedi-layer.html';
+      if (currentSite) {
+        url += `?site=${encodeURIComponent(currentSite)}`;
+      }
+      window.location.href = url;
+    }
+
+    // Update topology link in navbar
+    function updateTopologyLink() {
+      const link = document.getElementById('topologyNavLink');
+      if (link) {
+        let url = 'topology-nedi-layer.html';
+        if (currentSite) {
+          url += `?site=${encodeURIComponent(currentSite)}`;
+        }
+        link.href = url;
+      }
+    }
+
+    // View on Map
+    function viewOnMap(ip) {
+      let url = `topology-nedi-layer.html?highlight=${ip}`;
+      if (currentSite) {
+        url += `&site=${encodeURIComponent(currentSite)}`;
+      }
+      window.location.href = url;
+    }
+
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return '-';
+      const date = new Date(timestamp * 1000);
+      return date.toLocaleString('it-IT', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatOUI(mac) {
+      if (!mac) return '-';
+      const clean = mac.toLowerCase().replace(/[^0-9a-f]/g, '');
+      if (clean.length < 6) return '-';
+      const oui = clean.slice(0, 6).match(/.{2}/g).join(':').toUpperCase();
+      return oui;
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // ==========================================
+    // REFRESH FUNCTIONS
+    // ==========================================
+
+    // Refresh Functions
+    async function refreshStats() {
+      showToast('Aggiornamento in corso...', 'info');
+      await Promise.all([
+        loadNediStats(),
+        loadSyncStatus()
+      ]);
+      showToast('Statistiche aggiornate', 'success');
+    }
+
+    async function refreshDevices() {
+      showToast('Ricaricamento devices...', 'info');
+      await loadDevices();
+      showToast('Devices aggiornati', 'success');
+    }
+
+    // Utility Functions
+    function formatNumber(num) {
+      return new Intl.NumberFormat('it-IT').format(num);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '--';
+      const date = new Date(dateStr);
+      return date.toLocaleString('it-IT', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function normalizeStatus(status) {
+      if (status === 'up' || status === 'active' || status === 1 || status === 'online') return 'up';
+      if (status === 'down' || status === 'inactive' || status === 0 || status === 'offline') return 'down';
+      return 'unknown';
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ============ LLDP SNMP DISCOVERY ============
+
+    let lldpDiscoveryStats = {
+      scanned: 0,
+      apFound: 0,
+      devicesFound: 0,
+      errors: 0
+    };
+
+    // Avvia discovery LLDP
+    async function startLldpDiscovery() {
+      const networkInput = document.getElementById('lldpNetworkInput');
+      const btn = document.getElementById('lldpDiscoveryBtn');
+      const statusBadge = document.getElementById('lldpDiscoveryStatus');
+      const statusText = document.getElementById('lldpStatusText');
+      const logOutput = document.getElementById('lldpLogOutput');
+      const progressBar = document.getElementById('lldpProgressBar');
+      const progressFill = document.getElementById('lldpProgressFill');
+
+      const network = networkInput.value.trim();
+
+      // Validazione network
+      if (!network) {
+        showToast('Inserisci una network valida (es. 192.168.21.0/24)', 'warning');
+        networkInput.focus();
+        return;
+      }
+
+      // Validazione formato CIDR
+      if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\/\d{1,2}$/.test(network)) {
+        showToast('Formato network non valido. Usa il formato CIDR (es. 192.168.21.0/24)', 'error');
+        networkInput.focus();
+        return;
+      }
+
+      // Reset stats
+      lldpDiscoveryStats = { scanned: 0, apFound: 0, devicesFound: 0, errors: 0 };
+      updateLldpStats();
+
+      // UI: Disable button
+      btn.disabled = true;
+      btn.classList.add('btn-pulse');
+      btn.innerHTML = '<div class="spinner"></div> Discovery in corso...';
+
+      // UI: Show status
+      statusBadge.style.display = 'flex';
+      statusBadge.className = 'status-badge warning';
+      statusText.textContent = 'In esecuzione';
+
+      // UI: Show progress
+      progressBar.style.display = 'block';
+      progressFill.style.width = '0%';
+
+      // UI: Clear log
+      logOutput.innerHTML = '';
+
+      // Aggiungi log iniziale
+      appendLog('info', `🚀 Avvio discovery LLDP su network: ${network}`);
+      appendLog('info', `📡 Community SNMP: ${document.getElementById('lldpCommunityInput')?.value || 'public'}`);
+      appendLog('info', `⏳ Scansione in corso...`);
+
+      try {
+        // Chiama API discovery
+        const response = await fetch('/api/discovery/lldp-snmp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ network })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Discovery fallita');
+        }
+
+        const result = await response.json();
+
+        // Aggiorna stats da risultato (backend usa: scanned, responsive, lldpEnabled, apImported)
+        lldpDiscoveryStats.scanned = result.scanned || 0;
+        lldpDiscoveryStats.apFound = result.apImported || 0;
+        lldpDiscoveryStats.devicesFound = result.lldpEnabled || 0;
+        lldpDiscoveryStats.errors = result.errors || 0;
+        updateLldpStats();
+
+        // Mostra risultati nei log
+        appendLog('success', `✅ Discovery completata!`);
+        appendLog('info', `📊 Host scansionati: ${result.scanned || 0}`);
+        appendLog('success', `📡 AP trovati: ${result.apImported || 0}`);
+        appendLog('info', `🔌 Altri device LLDP: ${result.lldpEnabled || 0}`);
+
+        if (result.errors > 0) {
+          appendLog('warning', `⚠️  Errori: ${result.errors}`);
+        }
+
+        // Mostra dettagli devices trovati (solo quelli che rispondono a SNMP)
+        if (result.devices && result.devices.length > 0) {
+          const responsiveDevices = result.devices.filter(dev => dev.sysname && dev.responsive);
+          if (responsiveDevices.length > 0) {
+            appendLog('info', `\n📋 Devices SNMP responsivi (${responsiveDevices.length}):`);
+            responsiveDevices.forEach(dev => {
+              const isAp = dev.type === 'ap' || dev.sysname.toLowerCase().includes('ap');
+              const icon = isAp ? '📡' : '🔌';
+              const lldpBadge = dev.lldpEnabled ? ' [LLDP]' : '';
+              appendLog('device', `  ${icon} ${dev.sysname} (${dev.ip})${lldpBadge}`);
+            });
+          }
+        }
+
+        // Progress 100%
+        progressFill.style.width = '100%';
+
+        // Status success
+        statusBadge.className = 'status-badge up';
+        statusText.textContent = 'Completata';
+
+        showToast(`Discovery completata: ${result.apImported || 0} AP trovati`, 'success');
+
+        // Refresh devices table dopo discovery
+        setTimeout(() => {
+          refreshDevices();
+        }, 1000);
+
+      } catch (err) {
+        console.error('Errore discovery LLDP:', err);
+
+        appendLog('error', `❌ Errore discovery: ${err.message}`);
+
+        lldpDiscoveryStats.errors++;
+        updateLldpStats();
+
+        statusBadge.className = 'status-badge down';
+        statusText.textContent = 'Errore';
+
+        showToast(`Errore discovery: ${err.message}`, 'error');
+
+      } finally {
+        // Re-enable button
+        btn.disabled = false;
+        btn.classList.remove('btn-pulse');
+        btn.innerHTML = '<span>▶️</span> Avvia Discovery';
+
+        // Hide progress dopo 2 secondi
+        setTimeout(() => {
+          progressBar.style.display = 'none';
+          progressFill.style.width = '0%';
+        }, 2000);
+      }
+    }
+
+    // Aggiorna statistiche discovery con animazione
+    function updateLldpStats() {
+      updateStatWithAnimation('lldpScannedCount', lldpDiscoveryStats.scanned);
+      updateStatWithAnimation('lldpApFoundCount', lldpDiscoveryStats.apFound);
+      updateStatWithAnimation('lldpDevicesCount', lldpDiscoveryStats.devicesFound);
+      updateStatWithAnimation('lldpErrorsCount', lldpDiscoveryStats.errors);
+    }
+
+    // Helper per aggiornare stat con animazione
+    function updateStatWithAnimation(elementId, newValue) {
+      const element = document.getElementById(elementId);
+      const currentValue = parseInt(element.textContent) || 0;
+
+      if (newValue !== currentValue) {
+        element.classList.add('animated');
+        element.textContent = newValue;
+
+        setTimeout(() => {
+          element.classList.remove('animated');
+        }, 500);
+      }
+    }
+
+    // Aggiungi log entry
+    function appendLog(type, message) {
+      const logOutput = document.getElementById('lldpLogOutput');
+
+      // Rimuovi messaggio placeholder se presente
+      if (logOutput.querySelector('div[style*="text-align: center"]')) {
+        logOutput.innerHTML = '';
+      }
+
+      const timestamp = new Date().toLocaleTimeString('it-IT');
+      const logEntry = document.createElement('div');
+      logEntry.style.marginBottom = '4px';
+
+      // Colori in base al tipo
+      const colors = {
+        info: 'var(--text-secondary)',
+        success: 'var(--accent-green)',
+        warning: 'var(--accent-yellow)',
+        error: 'var(--accent-red)',
+        device: 'var(--accent-cyan)'
+      };
+
+      const color = colors[type] || colors.info;
+
+      logEntry.innerHTML = `<span style="color: var(--text-muted);">[${timestamp}]</span> <span style="color: ${color};">${escapeHtml(message)}</span>`;
+
+      logOutput.appendChild(logEntry);
+
+      // Auto-scroll to bottom
+      logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    // ============ ACCESSIBILITY HELPERS ============
+
+    /**
+     * Handles keyboard events for action cards (Enter/Space activation)
+     * @param {KeyboardEvent} event - The keyboard event
+     * @param {Function} handler - The function to call on activation
+     */
+    function handleActionCardKeydown(event, handler) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        handler();
+      }
+    }
+
+    /**
+     * Updates aria-selected attribute on tab buttons when switching tabs
+     * This is called from switchTab in device-panel.js
+     */
+    function updateTabAccessibility(activeTabName) {
+      document.querySelectorAll('.panel-tabs .tab').forEach(btn => {
+        const isActive = btn.dataset.tab === activeTabName;
+        btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+    }
+
+    // Override switchTab to include accessibility updates
+    const originalSwitchTab = window.switchTab;
+    window.switchTab = function(tabName) {
+      originalSwitchTab(tabName);
+      updateTabAccessibility(tabName);
+    };
+  </script>
+</body>
+</html>

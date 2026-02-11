@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+
+# Git worktrees
+.worktrees/
+
+# Auto-generated
+.auto-claude/
+
+# Minified files
+*.min.js
+
+# Test scripts (many are quick one-offs)
+# test-*.mjs
+
+# Public vendor libraries
+public/lib/

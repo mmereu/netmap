@@ -1,0 +1,248 @@
+/**
+ * NetMap Design System - Design Tokens
+ * =====================================
+ * Single source of truth for CSS variables
+ * Aesthetic: Industrial/SCADA control panel theme
+ *
+ * This file consolidates variables from:
+ * - discovery-industrial.css
+ * - topology-industrial.css
+ *
+ * Usage: Import this file first, before any other design system files.
+ */
+
+/* ============================================
+   FONTS - Industrial & Technical
+   ============================================ */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;900&display=swap');
+
+/* ============================================
+   CSS VARIABLES - Unified Industrial Palette
+   ============================================ */
+:root {
+  /* ================================================
+     BASE COLORS - Dark Industrial Background System
+     ================================================ */
+  --bg-primary: #0A0A0A;          /* Darkest - main background */
+  --bg-secondary: #111111;        /* Secondary panels, navbar */
+  --bg-panel: #161616;            /* Card/panel backgrounds */
+  --bg-input: #0D0D0D;            /* Form inputs, inset areas */
+  --bg-elevated: #1A1A1A;         /* Hover states, elevated surfaces */
+
+  /* ================================================
+     BORDER SYSTEM
+     ================================================ */
+  --border-default: #2A2A2A;      /* Default borders */
+  --border-active: #404040;       /* Active/focus states */
+  --border-highlight: #F59E0B;    /* Highlighted borders (amber accent) */
+
+  /* ================================================
+     INDUSTRIAL ACCENT COLORS - Primary Palette
+     ================================================ */
+
+  /* Amber - Primary accent (warnings, CTAs, brand) */
+  --amber: #F59E0B;
+  --amber-dim: #B45309;
+  --amber-glow: rgba(245, 158, 11, 0.3);
+  --amber-bright: #FBBF24;        /* Extra bright variant */
+
+  /* Green - Success, online, terminal style */
+  --green-terminal: #22C55E;
+  --green-dim: #15803D;
+  --green-glow: rgba(34, 197, 94, 0.3);
+  --green-bright: #4ADE80;        /* Extra bright variant */
+
+  /* Red - Alerts, errors, offline */
+  --red-alert: #EF4444;
+  --red-dim: #B91C1C;
+  --red-glow: rgba(239, 68, 68, 0.3);
+  --red-bright: #F87171;          /* Extra bright variant */
+
+  /* Cyan - Data, information, links */
+  --cyan-data: #06B6D4;
+  --cyan-glow: rgba(6, 182, 212, 0.3);
+  --cyan-bright: #22D3EE;         /* Extra bright variant */
+
+  /* Purple - System, special elements */
+  --purple-system: #A855F7;
+  --purple-glow: rgba(168, 85, 247, 0.3);
+  --purple-bright: #C084FC;       /* Extra bright variant */
+
+  /* Blue - Links, secondary actions */
+  --blue-link: #3B82F6;
+  --blue-glow: rgba(59, 130, 246, 0.3);
+  --blue-bright: #60A5FA;         /* Extra bright variant */
+
+  /* ================================================
+     TEXT HIERARCHY
+     ================================================ */
+  --text-primary: #E5E5E5;        /* Main text, headings */
+  --text-secondary: #A3A3A3;      /* Secondary text, descriptions */
+  --text-muted: #525252;          /* Muted text, disabled states */
+  --text-label: #737373;          /* Labels, captions */
+
+  /* ================================================
+     TYPOGRAPHY - Font Families
+     ================================================ */
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+  --font-ui: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Orbitron', 'JetBrains Mono', sans-serif;
+
+  /* ================================================
+     TYPOGRAPHY - Font Sizes (using rem for accessibility)
+     ================================================ */
+  --text-xs: 0.65rem;             /* 9.1px - Tiny labels */
+  --text-sm: 0.75rem;             /* 10.5px - Small labels, badges */
+  --text-base: 0.85rem;           /* 11.9px - Body text */
+  --text-md: 1rem;                /* 14px - Default */
+  --text-lg: 1.25rem;             /* 17.5px - Subheadings */
+  --text-xl: 1.5rem;              /* 21px - Headings */
+  --text-2xl: 1.75rem;            /* 24.5px - Large headings */
+  --text-3xl: 2rem;               /* 28px - Display headings */
+
+  /* ================================================
+     SPACING SCALE
+     ================================================ */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ================================================
+     BORDER RADIUS
+     ================================================ */
+  --radius-none: 0;
+  --radius-sm: 2px;               /* Industrial/sharp look */
+  --radius-md: 4px;               /* Slightly rounded */
+  --radius-lg: 8px;               /* More rounded elements */
+  --radius-full: 9999px;          /* Pills, circles */
+
+  /* ================================================
+     SHADOWS & EFFECTS
+     ================================================ */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+  /* Glow effects for industrial LED feel */
+  --glow-amber: 0 0 20px var(--amber-glow);
+  --glow-green: 0 0 20px var(--green-glow);
+  --glow-red: 0 0 20px var(--red-glow);
+  --glow-cyan: 0 0 20px var(--cyan-glow);
+  --glow-purple: 0 0 20px var(--purple-glow);
+
+  /* ================================================
+     INDUSTRIAL EFFECTS - Scanlines & Noise
+     ================================================ */
+  --scanline-opacity: 0.03;
+  --noise-opacity: 0.02;
+
+  /* ================================================
+     TRANSITIONS
+     ================================================ */
+  --transition-fast: 0.1s ease;
+  --transition-base: 0.15s ease;
+  --transition-slow: 0.3s ease;
+
+  /* ================================================
+     Z-INDEX SCALE
+     ================================================ */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal-backdrop: 500;
+  --z-modal: 600;
+  --z-tooltip: 700;
+  --z-toast: 800;
+  --z-overlay-effects: 9999;      /* Scanlines, noise */
+  --z-top: 10000;
+
+  /* ================================================
+     COMPONENT-SPECIFIC TOKENS
+     ================================================ */
+
+  /* Navbar */
+  --navbar-height: 56px;
+  --navbar-bg: var(--bg-secondary);
+  --navbar-border: var(--border-default);
+
+  /* Cards/Panels */
+  --card-bg: var(--bg-panel);
+  --card-border: var(--border-default);
+  --card-accent: var(--amber);
+
+  /* Buttons */
+  --btn-padding-x: 20px;
+  --btn-padding-y: 10px;
+  --btn-font-size: var(--text-sm);
+
+  /* Tables */
+  --table-header-bg: var(--bg-secondary);
+  --table-row-hover: var(--bg-elevated);
+  --table-border: var(--border-default);
+
+  /* Forms */
+  --input-bg: var(--bg-input);
+  --input-border: var(--border-default);
+  --input-focus-border: var(--amber);
+  --input-focus-glow: var(--amber-glow);
+
+  /* ================================================
+     LEGACY/COMPATIBILITY ALIASES
+     These map old variable names to new unified names.
+     Use new names in new code; these ensure backwards
+     compatibility during migration.
+     ================================================ */
+
+  /* From topology-industrial.css */
+  --ind-bg-dark: var(--bg-primary);
+  --ind-bg-panel: var(--bg-panel);
+  --ind-bg-card: var(--bg-elevated);
+  --ind-border: var(--border-default);
+  --ind-border-accent: var(--border-active);
+  --ind-amber: var(--amber);
+  --ind-amber-dim: var(--amber-dim);
+  --ind-amber-glow: var(--amber-glow);
+  --ind-green: var(--green-terminal);
+  --ind-green-dim: var(--green-dim);
+  --ind-green-glow: var(--green-glow);
+  --ind-cyan: var(--cyan-data);
+  --ind-cyan-glow: var(--cyan-glow);
+  --ind-red: var(--red-alert);
+  --ind-red-glow: var(--red-glow);
+  --ind-purple: var(--purple-system);
+  --ind-blue: var(--blue-link);
+  --ind-text-primary: var(--text-primary);
+  --ind-text-secondary: var(--text-secondary);
+  --ind-text-muted: var(--text-muted);
+
+  /* From port-view.html and topology-interactive.html inline styles */
+  --bg-dark: var(--bg-primary);
+  --bg-card: var(--bg-panel);
+  --bg-hover: var(--bg-elevated);
+  --border: var(--border-default);
+  --accent-cyan: var(--cyan-data);
+  --accent-green: var(--green-terminal);
+  --accent-red: var(--red-alert);
+  --accent-yellow: var(--amber);
+  --accent-blue: var(--blue-link);
+  --accent-purple: var(--purple-system);
+
+  /* Additional indicator colors (used in MAC tracker) */
+  --amber-indicator: #FFB000;     /* Brighter amber for NeDi indicators */
+}
+
+/* ============================================
+   DARK MODE DEFAULTS (already dark theme)
+   Light mode can be added later if needed
+   ============================================ */
+@media (prefers-color-scheme: light) {
+  :root {
+    /* Currently dark-only theme
+       Light mode variables can be added here in the future */
+  }
+}

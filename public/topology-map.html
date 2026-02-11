@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Topology Map - NetMap</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+  <style>
+    .chart {
+      display: block;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+    }
+    .node {
+      stroke-width: 0.2px;
+      cursor: move;
+    }
+    .nodelabel {
+      font-size: 8pt;
+      font-weight: bold;
+      fill: #444;
+    }
+    .nodeinfo {
+      font-size: 6pt;
+      fill: #666;
+    }
+    .linklabel {
+      font-size: 6pt;
+      stroke-opacity: 0;
+      padding: 5px;
+    }
+    .node.fixed {
+      fill: #000;
+    }
+    #mapContainer {
+      width: 100%;
+      height: 800px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>Topology Map</h1>
+      <p>Mappa topologica stile NeDi con D3.js</p>
+    </header>
+
+    <section class="card">
+      <form id="mapForm">
+        <div class="grid">
+          <label>
+            Device (opzionale)
+            <input type="text" id="device" placeholder="es. 10_L3_S6730_251">
+          </label>
+          <label>
+            Range (livelli neighbor)
+            <input type="number" id="range" value="0" min="0" max="10" title="0 = tutti, >0 = livelli neighbor">
+          </label>
+          <label>
+            Dimensioni
+            <input type="text" id="dim" value="1280x800" placeholder="WIDTHxHEIGHT">
+          </label>
+          <label>
+            Level
+            <select id="lev">
+              <option value="1">Region</option>
+              <option value="2">City</option>
+              <option value="3">Building</option>
+              <option value="4" selected>Device</option>
+              <option value="6">Node</option>
+            </select>
+          </label>
+          <label>
+            Mode
+            <select id="mde">
+              <option value="b">bld</option>
+              <option value="r">ring</option>
+              <option value="f" selected>flat</option>
+              <option value="l">layer</option>
+            </select>
+          </label>
+          <label>
+            Power/Weight
+            <input type="number" id="pwt" value="5" min="1" max="20">
+          </label>
+          <label>
+            Length
+            <input type="number" id="len" value="120" min="50" max="500">
+          </label>
+        </div>
+        <button type="submit">Carica Mappa</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div id="status">Pronto. Clicca "Carica Mappa" per visualizzare.</div>
+      <div id="mapContainer"></div>
+    </section>
+  </main>
+  
+  <script>
+    // Carica automaticamente la mappa al caricamento della pagina
+    document.addEventListener('DOMContentLoaded', () => {
+      // Attendi un secondo per assicurarsi che tutto sia caricato
+      setTimeout(() => {
+        const form = document.getElementById('mapForm');
+        if (form) {
+          form.dispatchEvent(new Event('submit'));
+        }
+      }, 500);
+    });
+  </script>
+
+  <script src="https://d3js.org/d3.v3.min.js"></script>
+  <script>
+    const form = document.getElementById('mapForm');
+    const status = document.getElementById('status');
+    const container = document.getElementById('mapContainer');
+    let svg, force, nodes, links;
+
+    function setStatus(msg, isError = false) {
+      status.textContent = msg;
+      status.style.color = isError ? 'red' : 'inherit';
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const dim = document.getElementById('dim').value;
+      const [width, height] = dim.split('x').map(Number);
+      const lev = document.getElementById('lev').value;
+      const mde = document.getElementById('mde').value;
+      const pwt = Number(document.getElementById('pwt').value);
+      const len = Number(document.getElementById('len').value);
+      const device = document.getElementById('device').value;
+      const range = Number(document.getElementById('range').value);
+
+      setStatus('Caricamento mappa...');
+      
+      try {
+        let url = `/api/map-nedi?dim=${dim}&lev=${lev}&mde=${mde}&pwt=${pwt}&len=${len}`;
+        if (device) url += `&st[]=${encodeURIComponent(device)}`;
+        if (range > 0) url += `&range=${range}`;
+        
+        const resp = await fetch(url);
+        const graph = await resp.json();
+        
+        if (!resp.ok) {
+          setStatus(graph.error || 'Errore nel caricamento', true);
+          return;
+        }
+
+        setStatus(`Nodi: ${graph.nodes.length}, Link: ${graph.links.length}`);
+        renderMap(graph, width, height, len, pwt);
+      } catch (err) {
+        setStatus(err.message, true);
+      }
+    });
+
+    function renderMap(graph, width, height, len, pwt) {
+      // Rimuovi SVG esistente
+      d3.select('#mapContainer').selectAll('svg').remove();
+
+      const color = d3.scale.category20();
+
+      force = d3.layout.force()
+        .friction(0.9) // Più attrito per movimento più lento
+        .gravity(0.05) // Meno gravità
+        .charge(-100) // Più repulsione
+        .linkDistance(len / 3) // Distanza link
+        .linkStrength(0.5) // Forza link
+        .size([width, height]);
+
+      svg = d3.select('#mapContainer')
+        .append('svg')
+        .attr('id', 'dchart')
+        .attr('class', 'chart')
+        .attr('width', width)
+        .attr('height', height)
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet')
+        .call(d3.behavior.zoom().on('zoom', redraw))
+        .append('g');
+
+      function redraw() {
+        svg.attr('transform',
+          'translate(' + d3.event.translate + ')'
+          + ' scale(' + d3.event.scale + ')');
+      }
+
+      // Salva coordinate iniziali se presenti (calcolate da NeDi)
+      graph.nodes.forEach((node, i) => {
+        if (node.x && node.y) {
+          // Salva coordinate iniziali
+          node.initialX = node.x;
+          node.initialY = node.y;
+          node.fixed = false; // Non fisso, ma parte da qui
+        } else {
+          // Se non ha coordinate, posiziona casualmente
+          node.x = width / 2 + (Math.random() - 0.5) * 200;
+          node.y = height / 2 + (Math.random() - 0.5) * 200;
+        }
+      });
+
+      // Applica coordinate iniziali PRIMA di start (se presenti)
+      graph.nodes.forEach((node) => {
+        if (node.x && node.y) {
+          // Mantieni coordinate iniziali calcolate da NeDi
+          node.px = node.x; // Posizione precedente per stabilizzazione
+          node.py = node.y;
+        } else {
+          // Se non ha coordinate, posiziona casualmente
+          node.x = width / 2 + (Math.random() - 0.5) * 200;
+          node.y = height / 2 + (Math.random() - 0.5) * 200;
+        }
+      });
+
+      force
+        .nodes(graph.nodes)
+        .links(graph.links)
+        .start();
+      
+      // Forza coordinate iniziali per alcuni tick (stabilizzazione)
+      let tickCount = 0;
+      force.on('tick', function() {
+        if (tickCount < 10) {
+          // Per i primi 10 tick, mantieni coordinate iniziali se presenti
+          graph.nodes.forEach((node) => {
+            if (node.initialX && node.initialY) {
+              node.x = node.initialX;
+              node.y = node.initialY;
+            }
+          });
+        }
+        tickCount++;
+      });
+
+      // Link
+      const link = svg.selectAll('.link')
+        .data(graph.links)
+        .enter()
+        .append('path')
+        .attr('class', 'link')
+        .style('stroke-width', d => d.w || 1)
+        .style('stroke', d => d.c || 'gray')
+        .attr('d', linkArc)
+        .style('fill', 'none')
+        .style('pointer-events', 'none');
+
+      // Nodi
+      const node = svg.selectAll('.node')
+        .data(graph.nodes)
+        .enter()
+        .append('g')
+        .attr('class', 'node')
+        .call(force.drag()
+          .on('drag', dragged)
+          .on('dragstart', dragstarted)
+          .on('dragend', dragended));
+
+      // Icone per nodi tipo "i"
+      node.filter(d => d.it === 'i')
+        .append('image')
+        .attr('xlink:href', d => d.is || 'img/0.png')
+        .attr('x', d => -d.w / 2)
+        .attr('y', d => -d.h / 2)
+        .attr('width', d => d.w || 14)
+        .attr('height', d => d.h || 14);
+
+      // Cerchi per nodi tipo "c"
+      node.filter(d => d.it === 'c')
+        .append('circle')
+        .attr('r', d => d.w || 5)
+        .style('fill', d => d.is || '#1b2b4a');
+
+      // Rettangoli per nodi tipo "r"
+      node.filter(d => d.it === 'r')
+        .append('rect')
+        .attr('x', d => -d.w / 2)
+        .attr('y', d => -d.h / 2)
+        .attr('width', d => d.w || 10)
+        .attr('height', d => d.h || 10)
+        .style('fill', d => d.is || '#1b2b4a');
+
+      // Label
+      node.append('text')
+        .attr('text-anchor', 'middle')
+        .attr('dy', d => (d.h / 2 || 7) + 8)
+        .attr('class', 'nodelabel')
+        .text(d => d.na || d.id);
+
+      // Tooltip
+      node.append('title')
+        .text(d => `${d.na || d.id}\n${d.ty || ''}\n${d.ip || ''}`);
+
+      // Interazioni
+      node.on('mouseover', function(d) {
+        link.style('opacity', l => {
+          if (d === l.source || d === l.target) return 1;
+          else return 0.2;
+        });
+      });
+
+      node.on('mouseout', function() {
+        link.style('opacity', 1);
+      });
+
+      node.on('contextmenu', function(d) {
+        d3.event.preventDefault();
+        d3.select(this).classed('fixed', d.fixed = false);
+      });
+
+      let tickCount = 0;
+      force.on('tick', () => {
+        // Per i primi 50 tick, mantieni coordinate iniziali se presenti (stabilizzazione)
+        if (tickCount < 50) {
+          graph.nodes.forEach((node) => {
+            if (node.initialX && node.initialY) {
+              // Interpola gradualmente verso coordinate iniziali
+              const factor = 1 - (tickCount / 50);
+              node.x = node.x * (1 - factor * 0.3) + node.initialX * (factor * 0.3);
+              node.y = node.y * (1 - factor * 0.3) + node.initialY * (factor * 0.3);
+            }
+          });
+        }
+        tickCount++;
+        
+        link.attr('d', linkArc);
+        node.attr('transform', d => `translate(${d.x},${d.y})`);
+      });
+      
+      // Ferma la simulazione dopo stabilizzazione
+      setTimeout(() => {
+        force.stop();
+      }, 2000);
+
+      function linkArc(d) {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dl = Math.sqrt(dx * dx + dy * dy);
+        let dr = 0;
+        let ro = 0;
+
+        if (d.n > 1) {
+          if (d.n % 2) {
+            ro = 1;
+            dr = dl * (d.n - 1) / 2;
+          } else {
+            dr = dl * d.n / 2;
+          }
+        }
+
+        return `M${d.source.x},${d.source.y}A${dr},${dr} 0 0,${ro} ${d.target.x},${d.target.y}`;
+      }
+
+      function dragged(d) {
+        d3.select(this).attr('transform', `translate(${d.x = d3.event.x},${d.y = d3.event.y})`);
+      }
+
+      function dragstarted(d) {
+        d3.event.sourceEvent.stopPropagation();
+        d3.select(this).classed('fixed', d.fixed = true);
+      }
+
+      function dragended(d) {
+        d3.select(this).classed('dragging', false);
+      }
+    }
+  </script>
+</body>
+</html>
+
