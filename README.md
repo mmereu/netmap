@@ -1,5 +1,9 @@
 # NetMap - Network Intelligence Platform
 
+> [!WARNING]
+> **Progetto archiviato / Archived project** — NetMap non è più sviluppato: ricerca MAC, topologia e discovery sono confluite in **MacScope**, il nuovo strumento di riferimento. Il codice resta consultabile in sola lettura.
+> *NetMap is no longer maintained; its features moved to MacScope. The code remains available read-only.*
+
 Real-time MAC address tracking, network topology visualization, and device discovery for enterprise environments with 1200+ network devices.
 
 ---
