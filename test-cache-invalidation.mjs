@@ -49,7 +49,7 @@ This script verifies that cache invalidation works correctly by:
 }
 
 const BASE_URL = options.baseUrl;
-const DEBUG_TOKEN = 'netmap-debug-2024';
+const DEBUG_TOKEN = process.env.NETMAP_DEBUG_TOKEN || '';
 
 // Test results storage
 const testResults = {

@@ -202,8 +202,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Debug: lista routes registrate
 app.get("/api/debug/routes", (req, res) => {
   // Protetto: solo localhost o header X-Debug-Token
-  const isLocal = req.ip === "127.0.0.1" || req.ip === "::1" || req.hostname === "localhost";
-  const hasDebugToken = req.headers["x-debug-token"] === "netmap-debug-2024";
+  // req.hostname viene dall'header Host (falsificabile): si usa solo l'IP.
+  const isLocal = req.ip === "127.0.0.1" || req.ip === "::1" || req.ip === "::ffff:127.0.0.1";
+  const debugToken = process.env.NETMAP_DEBUG_TOKEN;
+  const hasDebugToken = Boolean(debugToken) && req.headers["x-debug-token"] === debugToken;
   if (!isLocal && !hasDebugToken) {
     return res.status(403).json({ error: "Access denied" });
   }

@@ -72,7 +72,7 @@ const COUNCIL_MEMBERS = {
     name: 'Google AI',
     model: 'gemini-2.0-flash',
     baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-    apiKey: process.env.GOOGLE_AI_KEY || '***REMOVED***',
+    apiKey: process.env.GOOGLE_AI_KEY || '',
     timeout: 15000,
     specialty: 'knowledge',
     tier: 1

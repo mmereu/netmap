@@ -52,7 +52,7 @@ by comparing cold cache vs warm cache response times for map API endpoints.
 
 const BASE_URL = options.baseUrl;
 const ITERATIONS = options.iterations;
-const DEBUG_TOKEN = 'netmap-debug-2024';
+const DEBUG_TOKEN = process.env.NETMAP_DEBUG_TOKEN || '';
 
 // Results storage
 const results = {
